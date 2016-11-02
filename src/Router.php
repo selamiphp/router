@@ -5,6 +5,9 @@
  * @link      https://github.com/selamiphp/router
  * @license   https://github.com/selamiphp/router/blob/master/LICENSE (MIT License)
  */
+
+declare(strict_types=1);
+
 namespace Selami;
 
 use FastRoute;
@@ -72,7 +75,7 @@ final class Router
      * @param $folder
      * @return string
      */
-    private function extractFolder($requestPath, $folder)
+    private function extractFolder(string $requestPath, string $folder)
     {
         if (!empty($folder)) {
             $requestPath = '/' . trim(preg_replace('#^/' . $folder . '#msi', '/', $requestPath), "/");
