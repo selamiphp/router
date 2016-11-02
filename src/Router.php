@@ -98,6 +98,7 @@ final class Router
     }
 
     /**
+     * Define Closures for all routes that returns controller info to be used.
      * @param FastRoute\RouteCollector $route
      */
     private function addRoutes(FastRoute\RouteCollector $route)
@@ -129,7 +130,7 @@ final class Router
     }
 
     /**
-     *
+     * Get router data that includes route info and aliases
      */
     public function getRoute()
     {
@@ -143,6 +144,7 @@ final class Router
     }
 
     /**
+     * Get route info for requested uri
      * @param array $routeInfo
      * @return array $routerData
      */
@@ -180,5 +182,4 @@ final class Router
         }
         return $routeData;
     }
-
 }
