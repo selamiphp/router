@@ -152,34 +152,27 @@ final class Router
     {
         $routeData = [
             'status'        => 200,
-            'responseText'  => 'OK',
             'returnType'    => 'html',
-            'controller'    => null,
+            'definedRoute'    => null,
             'action'        => null,
             'args'          => []
         ];
-        switch ($routeInfo[0]) {
-            case FastRoute\Dispatcher::METHOD_NOT_ALLOWED:
-                $routeData['status'] = 405;
-                $routeData['responseText'] = "Method Not Allowed";
-                break;
-            case FastRoute\Dispatcher::FOUND:
-                $handler = $routeInfo[1];
-                $vars  = $routeInfo[2];
-                $route = $handler($vars);
-                $routeData['status'] = 200;
-                $routeData['responseText'] = "OK";
-                $routeData['returnType'] = $route['returnType'];
-                $routeData['controller'] = $route['definedRoute'];
-                $routeData['action'] = $route['action'];
-                $routeData['args'] = $route['args'];
-                break;
-            case FastRoute\Dispatcher::NOT_FOUND:
-            default:
-                $routeData['status'] = 404;
-                $routeData['responseText'] = "Not Found";
-                break;
+        if ($routeInfo[0] === FastRoute\Dispatcher::FOUND) {
+            $handler = $routeInfo[1];
+            $vars  = $routeInfo[2];
+            $routeData = $handler($vars);
         }
-        return $routeData;
+        $dispatchResults = [
+            FastRoute\Dispatcher::METHOD_NOT_ALLOWED => [
+                'status' => 405
+            ],
+            FastRoute\Dispatcher::FOUND => [
+                'status'  => 200
+            ],
+            FastRoute\Dispatcher::NOT_FOUND => [
+                'status' => 404
+            ]
+        ];
+        return array_merge($routeData, $dispatchResults[$routeInfo[0]]);
     }
 }
