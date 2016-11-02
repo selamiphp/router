@@ -52,7 +52,13 @@ final class Router
      * @param string $requestedPath
      * @param string $folder
      */
-    public function __construct(array $routes, string $defaultReturnType, string $method, string $requestedPath, string $folder='')
+    public function __construct(
+        array $routes,
+        string $defaultReturnType,
+        string $method,
+        string $requestedPath,
+        string $folder = ''
+    )
     {
         $this->routes   = $routes;
         $this->method   = $method;
@@ -71,7 +77,7 @@ final class Router
         if (!empty($folder)) {
             $requestPath = '/' . trim(preg_replace('#^/' . $folder . '#msi', '/', $requestPath), "/");
         }
-        if($requestPath == ''){
+        if ($requestPath == '') {
             $requestPath = '/';
         }
         return $requestPath;
@@ -174,7 +180,7 @@ final class Router
     {
         if ($routeInfo[0] === FastRoute\Dispatcher::FOUND) {
             $handler = $routeInfo[1];
-            $vars  = $routeInfo[2];
+            $vars = $routeInfo[2];
             return $handler($vars);
         }
         return [
