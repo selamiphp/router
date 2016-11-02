@@ -150,18 +150,7 @@ final class Router
      */
     private function runDispatcher(array $routeInfo)
     {
-        $routeData = [
-            'status'        => 200,
-            'returnType'    => 'html',
-            'definedRoute'    => null,
-            'action'        => null,
-            'args'          => []
-        ];
-        if ($routeInfo[0] === FastRoute\Dispatcher::FOUND) {
-            $handler = $routeInfo[1];
-            $vars  = $routeInfo[2];
-            $routeData = $handler($vars);
-        }
+        $routeData = $this->getRouteData($routeInfo);
         $dispatchResults = [
             FastRoute\Dispatcher::METHOD_NOT_ALLOWED => [
                 'status' => 405
@@ -174,5 +163,26 @@ final class Router
             ]
         ];
         return array_merge($routeData, $dispatchResults[$routeInfo[0]]);
+    }
+
+    /**
+     * Get routeData according to dispatcher's results
+     * @param array $routeInfo
+     * @return array
+     */
+    private function getRouteData(array $routeInfo)
+    {
+        if ($routeInfo[0] === FastRoute\Dispatcher::FOUND) {
+            $handler = $routeInfo[1];
+            $vars  = $routeInfo[2];
+            return $handler($vars);
+        }
+        return [
+            'status'        => 200,
+            'returnType'    => 'html',
+            'definedRoute'    => null,
+            'action'        => null,
+            'args'          => []
+        ];
     }
 }
