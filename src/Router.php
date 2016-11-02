@@ -22,19 +22,19 @@ final class Router
      * Route item can be defined using array key as an alias key.
      * @var array
      */
-    private $routes     = [];
+    private $routes = [];
 
     /**
      * HTTP request Method
      * @var string
      */
-    private $method     = null;
+    private $method = null;
 
     /**
      * Request Uri
      * @var string
      */
-    private $requestedPath       = null;
+    private $requestedPath = null;
 
     /**
      * Default return type if not noted in the $routes
