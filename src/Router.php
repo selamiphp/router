@@ -3,7 +3,7 @@
  * Selami Router
  *
  * @link      https://github.com/selamiphp/router
- * @license   https://github.com/slimphp/Slim/blob/3.x/LICENSE.md (MIT License)
+ * @license   https://github.com/selamiphp/router/blob/master/LICENSE (MIT License)
  */
 namespace Selami;
 
