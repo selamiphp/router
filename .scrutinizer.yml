@@ -16,4 +16,4 @@ build:
           format: 'clover'
 filter:
   excluded_paths:
-    - "tests/"
+    - "test/"

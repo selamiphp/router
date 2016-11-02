@@ -19,7 +19,7 @@
         <ini name="memory_limit" value="-1"/>
     </php>
     <testsuites>
-        <testsuite name="Selami Framework Test Suite">
+        <testsuite name="Selami Router Test Suite">
             <directory>./test/</directory>
         </testsuite>
     </testsuites>
