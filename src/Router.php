@@ -6,7 +6,7 @@
  * @license   https://github.com/selamiphp/router/blob/master/LICENSE (MIT License)
  */
 
-declare(strict_types=1);
+declare(strict_types = 1);
 
 namespace Selami;
 
@@ -31,19 +31,19 @@ final class Router
      * HTTP request Method
      * @var string
      */
-    private $method = null;
+    private $method;
 
     /**
      * Request Uri
      * @var string
      */
-    private $requestedPath = null;
+    private $requestedPath;
 
     /**
      * Default return type if not noted in the $routes
      * @var string
      */
-    private $defaultReturnType = null;
+    private $defaultReturnType;
 
     /**
      * Router constructor.
@@ -78,9 +78,9 @@ final class Router
     private function extractFolder(string $requestPath, string $folder)
     {
         if (!empty($folder)) {
-            $requestPath = '/' . trim(preg_replace('#^/' . $folder . '#msi', '/', $requestPath), "/");
+            $requestPath = '/' . trim(preg_replace('#^/' . $folder . '#msi', '/', $requestPath), '/');
         }
-        if ($requestPath == '') {
+        if ($requestPath === '') {
             $requestPath = '/';
         }
         return $requestPath;
@@ -113,12 +113,11 @@ final class Router
     private function addRoutes(FastRoute\RouteCollector $route)
     {
         foreach ($this->routes as $definedRoute) {
-            $definedRoute[3] = (isset($definedRoute[3])) ? $definedRoute[3] : $this->defaultReturnType;
+            $definedRoute[3] = isset($definedRoute[3]) ?: $this->defaultReturnType;
             $route->addRoute(strtoupper($definedRoute[0]), $definedRoute[1], function($args) use($definedRoute) {
-                $returnType = $definedRoute[3];
-                $controller = $definedRoute[2];
-                list($definedRoute, $action) = explode("/", $controller);
-                return  ['definedRoute' => $definedRoute, 'action'=> $action, 'returnType'=> $returnType, 'args'=> $args];
+                list(,,$controllerInfo, $returnType) = $definedRoute;
+                list($controller, $action) = explode('/', $controllerInfo);
+                return  ['controller' => $controller, 'action'=> $action, 'returnType'=> $returnType, 'args'=> $args];
             });
         }
     }
@@ -131,7 +130,7 @@ final class Router
     {
         $aliases = [];
         foreach ($this->routes as $alias=>$value) {
-            if (gettype($alias) == 'string') {
+            if (is_string($alias)) {
                 $aliases[$alias] = $value[1];
             }
         }
@@ -182,8 +181,7 @@ final class Router
     private function getRouteData(array $routeInfo)
     {
         if ($routeInfo[0] === FastRoute\Dispatcher::FOUND) {
-            $handler = $routeInfo[1];
-            $vars = $routeInfo[2];
+            list(, $handler, $vars) = $routeInfo;
             return $handler($vars);
         }
         return [
