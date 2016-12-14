@@ -45,6 +45,25 @@ final class Router
      */
     private $defaultReturnType;
 
+
+    /**
+     * Translation array.
+     * Make sures about return type.
+     * @var array
+     */
+    private static $translations = [
+        'h'     => 'html',
+        'html'  => 'html',
+        'r'     => 'redirect',
+        'redirect' => 'redirect',
+        'j'     => 'json',
+        'json'  => 'json',
+        't'     => 'text',
+        'text'  => 'text',
+        'd'     => 'download',
+        'download'  => 'download'
+    ];
+
     /**
      * Router constructor.
      * Create new router.
@@ -116,6 +135,7 @@ final class Router
             $definedRoute[3] = $definedRoute[3] ?? $this->defaultReturnType;
             $route->addRoute(strtoupper($definedRoute[0]), $definedRoute[1], function($args) use($definedRoute) {
                 list(,,$controller, $returnType) = $definedRoute;
+                $returnType = Router::$translations[$returnType] ?? $this->defaultReturnType;
                 return  ['controller' => $controller, 'returnType'=> $returnType, 'args'=> $args];
             });
         }
