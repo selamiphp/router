@@ -6,20 +6,20 @@ use Selami;
 use Zend\Diactoros\ServerRequestFactory;
 use ReflectionObject;
 
-class myRouterClass extends \PHPUnit_Framework_TestCase
+class MyRouterClass extends \PHPUnit_Framework_TestCase
 {
     private $config = [
         'folder'                => '',
         'default_return_type'   =>'html'
     ];
 
-    private $routes = [
+    private static $routes = [
         'home' => ['get', '/', 'app/main'],
         ['get', '/json', 'app/json', 'json'],
         ['post', '/json', 'app/redirect', 'redirect'],
         'alias' => ['get', '/alias', 'app/alias'],
     ];
-    private $request = null;
+    private $request;
 
     public function setUp()
     {
@@ -32,7 +32,7 @@ class myRouterClass extends \PHPUnit_Framework_TestCase
         $_POST                      = [];
         $_SERVER                    = [];
         $_COOKIE                    = [];
-        $_SERVER['DOCUMENT_ROOT']   = $basedir."/htdocs";
+        $_SERVER['DOCUMENT_ROOT']   = $basedir . '/htdocs';
         $_SERVER['SCRIPT_NAME']     = '/index.php';
         $_SERVER['REQUEST_URI']     = '/alias';
         $_SERVER['SERVER_PROTOCOL'] = 'HTTP/1.1';
@@ -56,7 +56,7 @@ class myRouterClass extends \PHPUnit_Framework_TestCase
     public function shouldExtractRouteFromURLSuccessfully($requestedPath, $folder, $expected)
     {
         $router = new Selami\Router(
-            $this->routes,
+            $this::$routes,
             $this->config['default_return_type'],
             $this->request->getMethod(),
             $this->request->getUri()->getPath(),
@@ -69,7 +69,7 @@ class myRouterClass extends \PHPUnit_Framework_TestCase
         $this->assertEquals(
             $expected,
             $result,
-            "extractFolder did not correctly extract the requested path for sub folder"
+            'extractFolder did not correctly extract the requested path for sub folder'
          );
     }
 
@@ -88,7 +88,7 @@ class myRouterClass extends \PHPUnit_Framework_TestCase
     public function shouldCorrectlyInstantiateRouter()
     {
         $router = new Selami\Router(
-            $this->routes,
+            $this::$routes,
             $this->config['default_return_type'],
             $this->request->getMethod(),
             $this->request->getUri()->getPath(),
@@ -104,7 +104,7 @@ class myRouterClass extends \PHPUnit_Framework_TestCase
     public function shouldCorrectlyReturnAliases()
     {
         $router = new Selami\Router(
-            $this->routes,
+            $this::$routes,
             $this->config['default_return_type'],
             $this->request->getMethod(),
             $this->request->getUri()->getPath(),
@@ -126,7 +126,7 @@ class myRouterClass extends \PHPUnit_Framework_TestCase
     public function shouldCorrectlyReturnRouteAndRouteAliases()
     {
         $router = new Selami\Router(
-            $this->routes,
+            $this::$routes,
             $this->config['default_return_type'],
             $this->request->getMethod(),
             $this->request->getUri()->getPath(),
@@ -138,6 +138,7 @@ class myRouterClass extends \PHPUnit_Framework_TestCase
         $this->assertArrayHasKey('action', $routeInfo['route'], "Router didn't correctly return router data");
         $this->assertEquals('app', $routeInfo['route']['controller'], "Router didn't correctly return router data");
         $this->assertEquals('alias', $routeInfo['route']['action'], "Router didn't correctly return router data");
+        $this->assertEquals('html', $routeInfo['route']['returnType'], "Router didn't correctly return router data");
     }
 
     /**
@@ -148,7 +149,7 @@ class myRouterClass extends \PHPUnit_Framework_TestCase
         $_SERVER['REQUEST_METHOD'] = 'POST';
         $this->request = ServerRequestFactory::fromGlobals($_SERVER, $_GET, $_POST, $_COOKIE, $_FILES);
         $router = new Selami\Router(
-            $this->routes,
+            $this::$routes,
             $this->config['default_return_type'],
             $this->request->getMethod(),
             $this->request->getUri()->getPath(),
@@ -167,7 +168,7 @@ class myRouterClass extends \PHPUnit_Framework_TestCase
         $_SERVER['REQUEST_METHOD'] = 'POST';
         $this->request = ServerRequestFactory::fromGlobals($_SERVER, $_GET, $_POST, $_COOKIE, $_FILES);
         $router = new Selami\Router(
-            $this->routes,
+            $this::$routes,
             $this->config['default_return_type'],
             $this->request->getMethod(),
             $this->request->getUri()->getPath(),
