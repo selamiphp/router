@@ -113,7 +113,7 @@ final class Router
     private function addRoutes(FastRoute\RouteCollector $route)
     {
         foreach ($this->routes as $definedRoute) {
-            $definedRoute[3] = isset($definedRoute[3]) ?: $this->defaultReturnType;
+            $definedRoute[3] = $definedRoute[3] ?? $this->defaultReturnType;
             $route->addRoute(strtoupper($definedRoute[0]), $definedRoute[1], function($args) use($definedRoute) {
                 list(,,$controllerInfo, $returnType) = $definedRoute;
                 list($controller, $action) = explode('/', $controllerInfo);
@@ -187,7 +187,7 @@ final class Router
         return [
             'status'        => 200,
             'returnType'    => 'html',
-            'definedRoute'    => null,
+            'definedRoute'  => null,
             'action'        => null,
             'args'          => []
         ];
