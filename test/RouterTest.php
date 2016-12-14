@@ -135,9 +135,7 @@ class MyRouterClass extends \PHPUnit_Framework_TestCase
         $routeInfo = $router->getRoute();
         $this->assertArrayHasKey('aliases', $routeInfo, "Router didn't correctly return route data");
         $this->assertArrayHasKey('controller', $routeInfo['route'], "Router didn't correctly return route data");
-        $this->assertArrayHasKey('action', $routeInfo['route'], "Router didn't correctly return router data");
-        $this->assertEquals('app', $routeInfo['route']['controller'], "Router didn't correctly return router data");
-        $this->assertEquals('alias', $routeInfo['route']['action'], "Router didn't correctly return router data");
+        $this->assertEquals('app/alias', $routeInfo['route']['controller'], "Router didn't correctly return router data");
         $this->assertEquals('html', $routeInfo['route']['returnType'], "Router didn't correctly return router data");
     }
 

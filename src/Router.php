@@ -115,9 +115,8 @@ final class Router
         foreach ($this->routes as $definedRoute) {
             $definedRoute[3] = $definedRoute[3] ?? $this->defaultReturnType;
             $route->addRoute(strtoupper($definedRoute[0]), $definedRoute[1], function($args) use($definedRoute) {
-                list(,,$controllerInfo, $returnType) = $definedRoute;
-                list($controller, $action) = explode('/', $controllerInfo);
-                return  ['controller' => $controller, 'action'=> $action, 'returnType'=> $returnType, 'args'=> $args];
+                list(,,$controller, $returnType) = $definedRoute;
+                return  ['controller' => $controller, 'returnType'=> $returnType, 'args'=> $args];
             });
         }
     }
