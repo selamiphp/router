@@ -1,9 +1,10 @@
 <?php
 /**
  * Selami Router
+ * PHP version 7+
  *
- * @link      https://github.com/selamiphp/router
- * @license   https://github.com/selamiphp/router/blob/master/LICENSE (MIT License)
+ * @license https://github.com/selamiphp/router/blob/master/LICENSE (MIT License)
+ * @link https://github.com/selamiphp/router
  */
 
 declare(strict_types = 1);
@@ -11,6 +12,7 @@ declare(strict_types = 1);
 namespace Selami;
 
 use FastRoute;
+
 /**
  * Router
  *
@@ -80,8 +82,8 @@ final class Router
         string $method,
         string $requestedPath,
         string $folder = ''
-    )
-    {
+    ) {
+    
         $this->routes   = $routes;
         $this->method   = $method;
         $this->requestedPath     = $this->extractFolder($requestedPath, $folder);
@@ -89,7 +91,7 @@ final class Router
     }
 
     /**
-     * Remove subfolder from requestedPath if defined
+     * Remove sub folder from requestedPath if defined
      * @param $requestPath
      * @param $folder
      * @return string
@@ -133,7 +135,7 @@ final class Router
     {
         foreach ($this->routes as $definedRoute) {
             $definedRoute[3] = $definedRoute[3] ?? $this->defaultReturnType;
-            $route->addRoute(strtoupper($definedRoute[0]), $definedRoute[1], function($args) use($definedRoute) {
+            $route->addRoute(strtoupper($definedRoute[0]), $definedRoute[1], function ($args) use ($definedRoute) {
                 list(,,$controller, $returnType) = $definedRoute;
                 $returnType = Router::$translations[$returnType] ?? $this->defaultReturnType;
                 return  ['controller' => $controller, 'returnType'=> $returnType, 'args'=> $args];
@@ -148,7 +150,7 @@ final class Router
     private function getAliases()
     {
         $aliases = [];
-        foreach ($this->routes as $alias=>$value) {
+        foreach ($this->routes as $alias => $value) {
             if (is_string($alias)) {
                 $aliases[$alias] = $value[1];
             }
@@ -207,7 +209,6 @@ final class Router
             'status'        => 200,
             'returnType'    => 'html',
             'definedRoute'  => null,
-            'action'        => null,
             'args'          => []
         ];
     }

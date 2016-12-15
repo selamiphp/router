@@ -29,10 +29,10 @@
   },
   "scripts": {
     "test": [
-      "php vendor/bin/phpcs",
-      "php vendor/bin/phpunit"
+      "phpunit",
+      "php-cs"
     ],
-    "phpunit": "php vendor/bin/phpunit",
-    "phpcs": "php vendor/bin/phpcs"
+    "phpunit": "php vendor/bin/phpunit ./phpunit.xml",
+    "php-cs": "php vendor/bin/phpcs ./src"
   }
 }
