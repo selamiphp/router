@@ -26,13 +26,5 @@
     "psr-4": {
       "Selami\\": "src/"
     }
-  },
-  "scripts": {
-    "test": [
-      "phpunit",
-      "php-cs"
-    ],
-    "phpunit": "php vendor/bin/phpunit ./phpunit.xml",
-    "php-cs": "php vendor/bin/phpcs ./src"
   }
 }
