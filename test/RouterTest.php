@@ -13,7 +13,6 @@ class MyRouterClass extends \PHPUnit_Framework_TestCase
         'default_return_type'   =>'html'
     ];
 
-    private static $routes = [];
     private $request;
 
     public function setUp()
@@ -51,7 +50,6 @@ class MyRouterClass extends \PHPUnit_Framework_TestCase
     public function shouldExtractRouteFromURLSuccessfully($requestedPath, $folder, $expected)
     {
         $router = new Selami\Router(
-            $this::$routes,
             $this->config['default_return_type'],
             $this->request->getMethod(),
             $this->request->getUri()->getPath(),
@@ -87,7 +85,6 @@ class MyRouterClass extends \PHPUnit_Framework_TestCase
     public function shouldCorrectlyInstantiateRouter()
     {
         $router = new Selami\Router(
-            $this::$routes,
             $this->config['default_return_type'],
             $this->request->getMethod(),
             $this->request->getUri()->getPath(),
@@ -107,7 +104,6 @@ class MyRouterClass extends \PHPUnit_Framework_TestCase
     public function shouldCorrectlyReturnRouteAndRouteAliases()
     {
         $router = new Selami\Router(
-            $this::$routes,
             $this->config['default_return_type'],
             $this->request->getMethod(),
             $this->request->getUri()->getPath(),
@@ -138,7 +134,6 @@ class MyRouterClass extends \PHPUnit_Framework_TestCase
         $_SERVER['REQUEST_METHOD'] = 'POST';
         $this->request = ServerRequestFactory::fromGlobals($_SERVER, $_GET, $_POST, $_COOKIE, $_FILES);
         $router = new Selami\Router(
-            $this::$routes,
             $this->config['default_return_type'],
             $this->request->getMethod(),
             $this->request->getUri()->getPath(),
@@ -162,7 +157,6 @@ class MyRouterClass extends \PHPUnit_Framework_TestCase
         $_SERVER['REQUEST_METHOD'] = 'POST';
         $this->request = ServerRequestFactory::fromGlobals($_SERVER, $_GET, $_POST, $_COOKIE, $_FILES);
         $router = new Selami\Router(
-            $this::$routes,
             $this->config['default_return_type'],
             $this->request->getMethod(),
             $this->request->getUri()->getPath(),
