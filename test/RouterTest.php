@@ -13,12 +13,7 @@ class MyRouterClass extends \PHPUnit_Framework_TestCase
         'default_return_type'   =>'html'
     ];
 
-    private static $routes = [
-        'home' => ['get', '/', 'app/main'],
-        ['get', '/json', 'app/json', 'json'],
-        ['post', '/json', 'app/redirect', 'redirect'],
-        'alias' => ['get', '/alias', 'app/alias'],
-    ];
+    private static $routes = [];
     private $request;
 
     public function setUp()
@@ -62,6 +57,10 @@ class MyRouterClass extends \PHPUnit_Framework_TestCase
             $this->request->getUri()->getPath(),
             $this->config['folder']
         );
+        $router->add('get', '/', 'app/main',null, 'home');
+        $router->add('get', '/json', 'app/json', 'json');
+        $router->add('post', '/json', 'app/redirect', 'redirect');
+        $router->add('get', '/alias', 'app/alias', null, 'alias');
         $reflector = new ReflectionObject($router);
         $method = $reflector->getMethod('extractFolder');
         $method->setAccessible(true);
@@ -94,30 +93,12 @@ class MyRouterClass extends \PHPUnit_Framework_TestCase
             $this->request->getUri()->getPath(),
             $this->config['folder']
         );
+        $router->add('get', '/', 'app/main',null, 'home');
+        $router->add('get', '/json', 'app/json', 'json');
+        $router->add('post', '/json', 'app/redirect', 'redirect');
+        $router->add('get', '/alias', 'app/alias', null, 'alias');
         $this->assertInstanceOf('Selami\Router', $router);
         $this->assertAttributeContains('GET', 'method', $router, "Router didn't correctly return method as GET.");
-    }
-
-    /**
-     * @test
-     */
-    public function shouldCorrectlyReturnAliases()
-    {
-        $router = new Selami\Router(
-            $this::$routes,
-            $this->config['default_return_type'],
-            $this->request->getMethod(),
-            $this->request->getUri()->getPath(),
-            $this->config['folder']
-        );
-        $reflector = new ReflectionObject($router);
-        $method = $reflector->getMethod('getAliases');
-        $method->setAccessible(true);
-        $aliases = $method->invoke($router);
-        $this->assertArrayHasKey('home', $aliases, "Router didn't correctly return aliases");
-        $this->assertArrayHasKey('alias', $aliases, "Router didn't correctly return aliases");
-        $this->assertEquals('/', $aliases['home'], "Router didn't correctly return aliases");
-        $this->assertEquals('/alias', $aliases['alias'], "Router didn't correctly return aliases");
     }
 
     /**
@@ -132,8 +113,18 @@ class MyRouterClass extends \PHPUnit_Framework_TestCase
             $this->request->getUri()->getPath(),
             $this->config['folder']
         );
+
+        $router->add('get', '/', 'app/main',null, 'home');
+        $router->add('get', '/json', 'app/json', 'json');
+        $router->add('post', '/json', 'app/redirect', 'redirect');
+        $router->add('get', '/alias', 'app/alias', null, 'alias');
         $routeInfo = $router->getRoute();
         $this->assertArrayHasKey('aliases', $routeInfo, "Router didn't correctly return route data");
+
+        $this->assertArrayHasKey('home', $routeInfo['aliases'], "Router didn't correctly return aliases");
+        $this->assertArrayHasKey('alias', $routeInfo['aliases'], "Router didn't correctly return aliases");
+        $this->assertEquals('/', $routeInfo['aliases']['home'], "Router didn't correctly return aliases");
+        $this->assertEquals('/alias', $routeInfo['aliases']['alias'], "Router didn't correctly return aliases");
         $this->assertArrayHasKey('controller', $routeInfo['route'], "Router didn't correctly return route data");
         $this->assertEquals('app/alias', $routeInfo['route']['controller'], "Router didn't correctly return router data");
         $this->assertEquals('html', $routeInfo['route']['returnType'], "Router didn't correctly return router data");
@@ -153,6 +144,11 @@ class MyRouterClass extends \PHPUnit_Framework_TestCase
             $this->request->getUri()->getPath(),
             $this->config['folder']
         );
+
+        $router->add('get', '/', 'app/main',null, 'home');
+        $router->add('get', '/json', 'app/json', 'json');
+        $router->add('post', '/json', 'app/redirect', 'redirect');
+        $router->add('get', '/alias', 'app/alias', null, 'alias');
         $routeInfo = $router->getRoute();
         $this->assertEquals('405', $routeInfo['route']['status'], "Router didn't correctly return Method Not Allowed");
     }
@@ -172,6 +168,11 @@ class MyRouterClass extends \PHPUnit_Framework_TestCase
             $this->request->getUri()->getPath(),
             $this->config['folder']
         );
+
+        $router->add('get', '/', 'app/main',null, 'home');
+        $router->add('get', '/json', 'app/json', 'json');
+        $router->add('post', '/json', 'app/redirect', 'redirect');
+        $router->add('get', '/alias', 'app/alias', null, 'alias');
         $routeInfo = $router->getRoute();
         $this->assertEquals('404', $routeInfo['route']['status'], "Router didn't correctly returnNot FOund");
     }

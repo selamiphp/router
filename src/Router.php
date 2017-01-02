@@ -12,6 +12,7 @@ declare(strict_types = 1);
 namespace Selami;
 
 use FastRoute;
+use InvalidArgumentException;
 
 /**
  * Router
@@ -23,11 +24,18 @@ final class Router
 {
     /**
      * routes array to be registered.
-     * Each route item is an array has items respectively : Request Method, Request Uri, Controller/Action, Return Type.
+     * Some routes may have aliases to be used in templating system
      * Route item can be defined using array key as an alias key.
      * @var array
      */
     private $routes = [];
+
+    /**
+     * aliases array to be registered.
+     * Each route item is an array has items respectively : Request Method, Request Uri, Controller/Action, Return Type.
+     * @var array
+     */
+    private $aliases = [];
 
     /**
      * HTTP request Method
@@ -67,6 +75,35 @@ final class Router
     ];
 
     /**
+     * Valid Request Methods array.
+     * Make sures about requested methods.
+     * @var array
+     */
+    private static $validRequestMethods = [
+        'GET',
+        'OPTIONS',
+        'HEAD',
+        'POST',
+        'PUT',
+        'DELETE',
+        'PATCH'
+    ];
+
+
+    /**
+     * Valid Request Methods array.
+     * Make sures about return type.
+     * @var array
+     */
+    private static $validReturnTypes = [
+        'html',
+        'json',
+        'text',
+        'redirect',
+        'download'
+    ];
+
+    /**
      * Router constructor.
      * Create new router.
      *
@@ -75,25 +112,27 @@ final class Router
      * @param string $method
      * @param string $requestedPath
      * @param string $folder
+     * @throws InvalidArgumentException
      */
     public function __construct(
-        array $routes,
         string $defaultReturnType,
         string $method,
         string $requestedPath,
         string $folder = ''
     ) {
-    
-        $this->routes   = $routes;
+        if (!in_array($method, self::$validRequestMethods, true)) {
+            $message = sprintf('%s is nat valid Http request method.', $method);
+            throw new InvalidArgumentException($message);
+        }
         $this->method   = $method;
         $this->requestedPath     = $this->extractFolder($requestedPath, $folder);
-        $this->defaultReturnType = $defaultReturnType;
+        $this->defaultReturnType = self::$translations[$defaultReturnType] ?? self::$defaultReturnType[0];
     }
 
     /**
      * Remove sub folder from requestedPath if defined
-     * @param $requestPath
-     * @param $folder
+     * @param string $requestPath
+     * @param string $folder
      * @return string
      */
     private function extractFolder(string $requestPath, string $folder)
@@ -105,6 +144,35 @@ final class Router
             $requestPath = '/';
         }
         return $requestPath;
+    }
+
+    /**
+     * add route to routes list
+     * @param string|array requestMethods
+     * @param string $route
+     * @param string $action
+     * @param string $returnType
+     * @param string $alias
+     * @return string
+     * @throws InvalidArgumentException
+     */
+    public function add($requestMethods, string $route, string $action, string $returnType=null, string $alias=null)
+    {
+        $requestMethodParameterType = gettype($requestMethods);
+        if (!in_array($requestMethodParameterType, ['array', 'string'], true)) {
+            $message = sprintf(
+                'Request method must be either string or array but %s given.',
+                $requestMethodParameterType);
+            throw new InvalidArgumentException($message);
+        }
+        $requestMethodsGiven = is_array($requestMethods) ? (array) $requestMethods : [0 => $requestMethods];
+        $returnType = $returnType === null ? $this->defaultReturnType: self::$validReturnTypes[$returnType]?? $this->defaultReturnType;
+        foreach ($requestMethodsGiven as $requestMethod) {
+            if ($alias !== null) {
+                $this->aliases[$alias] = $route;
+            }
+            $this->routes[] = [strtoupper($requestMethod), $route, $action, $returnType];
+        }
     }
 
     /**
@@ -143,20 +211,7 @@ final class Router
         }
     }
 
-    /**
-     * Get aliases and request uri from $routes
-     * @return array
-     */
-    private function getAliases()
-    {
-        $aliases = [];
-        foreach ($this->routes as $alias => $value) {
-            if (is_string($alias)) {
-                $aliases[$alias] = $value[1];
-            }
-        }
-        return $aliases;
-    }
+
 
     /**
      * Get router data that includes route info and aliases
@@ -167,10 +222,11 @@ final class Router
         $routeInfo  = $dispatcher->dispatch($this->method, $this->requestedPath);
         $routerData = [
             'route'     => $this->runDispatcher($routeInfo),
-            'aliases'   => $this->getAliases()
+            'aliases'   => $this->aliases
         ];
         return $routerData;
     }
+
 
     /**
      * Get route info for requested uri
