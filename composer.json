@@ -1,7 +1,7 @@
 {
   "name": "selami/router",
   "type": "library",
-  "description": "Router and Dispatcher built on top nikic/FastRoute that returns controller and action.",
+  "description": "Router and Dispatcher built on top nikic/FastRoute that returns controller class name to be instantiated.",
   "keywords": ["Selami", "Router", "FastRoute"],
   "homepage": "https://github.com/selamiphp/router",
   "license": "MIT",
