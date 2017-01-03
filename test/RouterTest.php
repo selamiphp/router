@@ -5,6 +5,8 @@ namespace tests;
 use Selami;
 use Zend\Diactoros\ServerRequestFactory;
 use ReflectionObject;
+use UnexpectedValueException;
+use InvalidArgumentException;
 
 class MyRouterClass extends \PHPUnit_Framework_TestCase
 {
@@ -95,7 +97,12 @@ class MyRouterClass extends \PHPUnit_Framework_TestCase
         $router->add('post', '/json', 'app/redirect', 'redirect');
         $router->add('get', '/alias', 'app/alias', null, 'alias');
         $this->assertInstanceOf('Selami\Router', $router);
-        $this->assertAttributeContains('GET', 'method', $router, "Router didn't correctly return method as GET.");
+        $this->assertAttributeContains(
+            'GET',
+            'method',
+            $router,
+            "Router didn't correctly return method as GET."
+        );
     }
 
     /**
@@ -104,16 +111,17 @@ class MyRouterClass extends \PHPUnit_Framework_TestCase
     public function shouldCorrectlyReturnRouteAndRouteAliases()
     {
         $router = new Selami\Router(
-            $this->config['default_return_type'],
+            'json',
             $this->request->getMethod(),
             $this->request->getUri()->getPath(),
             $this->config['folder']
         );
 
-        $router->add('get', '/', 'app/main',null, 'home');
-        $router->add('get', '/json', 'app/json', 'json');
-        $router->add('post', '/json', 'app/redirect', 'redirect');
-        $router->add('get', '/alias', 'app/alias', null, 'alias');
+        $router->get('/', 'app/main', null, 'home');
+        $router->get('/json', 'app/json', 'json');
+        $router->get('/html', 'app/json');
+        $router->post('/json', 'app/redirect', 'redirect');
+        $router->get('/alias', 'app/alias', null, 'alias');
         $routeInfo = $router->getRoute();
         $this->assertArrayHasKey('aliases', $routeInfo, "Router didn't correctly return route data");
 
@@ -123,8 +131,68 @@ class MyRouterClass extends \PHPUnit_Framework_TestCase
         $this->assertEquals('/alias', $routeInfo['aliases']['alias'], "Router didn't correctly return aliases");
         $this->assertArrayHasKey('controller', $routeInfo['route'], "Router didn't correctly return route data");
         $this->assertEquals('app/alias', $routeInfo['route']['controller'], "Router didn't correctly return router data");
-        $this->assertEquals('html', $routeInfo['route']['returnType'], "Router didn't correctly return router data");
+        $this->assertEquals('json', $routeInfo['route']['returnType'], "Router didn't correctly return router data");
     }
+
+    /**
+     * @test
+     * @expectedException UnexpectedValueException
+     */
+    public function shouldThrowUnexpectedValueExceptionFor__callMethod()
+    {
+        $router = new Selami\Router(
+            $this->config['default_return_type'],
+            $this->request->getMethod(),
+            $this->request->getUri()->getPath(),
+            $this->config['folder']
+        );
+        $router->nonAvalibleHTTPMethod('/', 'app/main',null, 'home');
+    }
+
+    /**
+     * @test
+     * @expectedException UnexpectedValueException
+     */
+    public function shouldThrowUnexpectedValueExceptionFor__constructorMethod()
+    {
+        $router = new Selami\Router(
+            $this->config['default_return_type'],
+            'UNEXPECTEDVALUE',
+            $this->request->getUri()->getPath(),
+            $this->config['folder']
+        );
+    }
+
+    /**
+     * @test
+     * @expectedException UnexpectedValueException
+     */
+    public function shouldThrowUnexpectedValueExceptionForAddMethod()
+    {
+        $router = new Selami\Router(
+            $this->config['default_return_type'],
+            $this->request->getMethod(),
+            $this->request->getUri()->getPath(),
+            $this->config['folder']
+        );
+        $router->add('nonAvailableHTTPMethod','/', 'app/main',null, 'home');
+    }
+
+    /**
+     * @test
+     * @expectedException InvalidArgumentException
+     */
+    public function shouldThrowInvalidArgumentExceptionForAddMethodIfREquestMEthotIsNotStringOrArray()
+    {
+        $router = new Selami\Router(
+            $this->config['default_return_type'],
+            $this->request->getMethod(),
+            $this->request->getUri()->getPath(),
+            $this->config['folder']
+        );
+        $router->add(200,'/', 'app/main',null, 'home');
+    }
+
 
     /**
      * @test

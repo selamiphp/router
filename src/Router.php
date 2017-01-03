@@ -5,6 +5,8 @@
  *
  * @license https://github.com/selamiphp/router/blob/master/LICENSE (MIT License)
  * @link https://github.com/selamiphp/router
+ * @package router
+ * @category library
  */
 
 declare(strict_types = 1);
@@ -13,6 +15,7 @@ namespace Selami;
 
 use FastRoute;
 use InvalidArgumentException;
+use UnexpectedValueException;
 
 /**
  * Router
@@ -93,6 +96,7 @@ final class Router
     /**
      * Valid Request Methods array.
      * Make sures about return type.
+     * Index 0 is also default value.
      * @var array
      */
     private static $validReturnTypes = [
@@ -107,12 +111,11 @@ final class Router
      * Router constructor.
      * Create new router.
      *
-     * @param array $routes
      * @param string $defaultReturnType
      * @param string $method
      * @param string $requestedPath
      * @param string $folder
-     * @throws InvalidArgumentException
+     * @throws UnexpectedValueException
      */
     public function __construct(
         string $defaultReturnType,
@@ -121,12 +124,12 @@ final class Router
         string $folder = ''
     ) {
         if (!in_array($method, self::$validRequestMethods, true)) {
-            $message = sprintf('%s is nat valid Http request method.', $method);
-            throw new InvalidArgumentException($message);
+            $message = sprintf('%s is not valid Http request method.', $method);
+            throw new UnexpectedValueException($message);
         }
         $this->method   = $method;
         $this->requestedPath     = $this->extractFolder($requestedPath, $folder);
-        $this->defaultReturnType = self::$translations[$defaultReturnType] ?? self::$defaultReturnType[0];
+        $this->defaultReturnType = self::$translations[$defaultReturnType] ?? self::$validReturnTypes[0];
     }
 
     /**
@@ -153,26 +156,51 @@ final class Router
      * @param string $action
      * @param string $returnType
      * @param string $alias
-     * @return string
      * @throws InvalidArgumentException
+     * @throws UnexpectedValueException
      */
     public function add($requestMethods, string $route, string $action, string $returnType=null, string $alias=null)
     {
-        $requestMethodParameterType = gettype($requestMethods);
-        if (!in_array($requestMethodParameterType, ['array', 'string'], true)) {
-            $message = sprintf(
-                'Request method must be either string or array but %s given.',
-                $requestMethodParameterType);
-            throw new InvalidArgumentException($message);
-        }
         $requestMethodsGiven = is_array($requestMethods) ? (array) $requestMethods : [0 => $requestMethods];
-        $returnType = $returnType === null ? $this->defaultReturnType: self::$validReturnTypes[$returnType]?? $this->defaultReturnType;
+        $returnType = $returnType === null ? $this->defaultReturnType : self::$validReturnTypes[$returnType] ?? $this->defaultReturnType;
         foreach ($requestMethodsGiven as $requestMethod) {
+            $requestMethodParameterType = gettype($requestMethod);
+            if (!in_array($requestMethodParameterType, ['array', 'string'], true)) {
+                $message = sprintf(
+                    'Request method must be string or array but %s given.',
+                    $requestMethodParameterType);
+                throw new InvalidArgumentException($message);
+            }
+            if (!in_array(strtoupper($requestMethod), self::$validRequestMethods, true)) {
+                $message = sprintf('%s is not valid Http request method.', $requestMethod);
+                throw new UnexpectedValueException($message);
+            }
             if ($alias !== null) {
                 $this->aliases[$alias] = $route;
             }
             $this->routes[] = [strtoupper($requestMethod), $route, $action, $returnType];
         }
+    }
+
+    /**
+     * @param string $method
+     * @param array $args
+     * @throws UnexpectedValueException
+     */
+    public function __call(string $method, array $args)
+    {
+        if (!in_array(strtoupper($method), self::$validRequestMethods, true)) {
+            $message = sprintf('%s is not valid Http request method.', $method);
+            throw new UnexpectedValueException($message);
+        }
+        $defaults = [
+            null,
+            null,
+            $this->defaultReturnType,
+            null
+        ];
+        list($route, $action, $returnType, $alias) = array_merge($args, $defaults);
+        $this->add($method, $route, $action, $returnType, $alias);
     }
 
     /**
@@ -182,10 +210,10 @@ final class Router
     private function dispatcher()
     {
         $options = [
-            'routeParser'   => 'FastRoute\\RouteParser\\Std',
-            'dataGenerator' => 'FastRoute\\DataGenerator\\GroupCountBased',
-            'dispatcher'    => 'FastRoute\\Dispatcher\\GroupCountBased',
-            'routeCollector' => 'FastRoute\\RouteCollector',
+            'routeParser'   => FastRoute\RouteParser\Std::class,
+            'dataGenerator' => FastRoute\DataGenerator\GroupCountBased::class,
+            'dispatcher'    => FastRoute\Dispatcher\GroupCountBased::class,
+            'routeCollector' => FastRoute\RouteCollector::class,
         ];
         /** @var RouteCollector $routeCollector */
         $routeCollector = new $options['routeCollector'](
