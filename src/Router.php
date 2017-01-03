@@ -162,7 +162,7 @@ final class Router
     public function add($requestMethods, string $route, string $action, string $returnType=null, string $alias=null)
     {
         $requestMethodsGiven = is_array($requestMethods) ? (array) $requestMethods : [0 => $requestMethods];
-        $returnType = $returnType === null ? $this->defaultReturnType : self::$validReturnTypes[$returnType] ?? $this->defaultReturnType;
+        $returnType = $this->checkReturnType($returnType);
         foreach ($requestMethodsGiven as $requestMethod) {
             $this->checkRequestMethodParameterType($requestMethod);
             $this->checkRequestMethodIsValid($requestMethod);
@@ -190,6 +190,14 @@ final class Router
         ];
         list($route, $action, $returnType, $alias) = array_merge($args, $defaults);
         $this->add($method, $route, $action, $returnType, $alias);
+    }
+
+    /**
+     * @param string|null $returnType
+     * @return string
+     */
+    private function checkReturnType($returnType) {
+        return $returnType === null ? $this->defaultReturnType : self::$validReturnTypes[$returnType] ?? $this->defaultReturnType;
     }
 
     /**
