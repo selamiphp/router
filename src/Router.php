@@ -164,17 +164,8 @@ final class Router
         $requestMethodsGiven = is_array($requestMethods) ? (array) $requestMethods : [0 => $requestMethods];
         $returnType = $returnType === null ? $this->defaultReturnType : self::$validReturnTypes[$returnType] ?? $this->defaultReturnType;
         foreach ($requestMethodsGiven as $requestMethod) {
-            $requestMethodParameterType = gettype($requestMethod);
-            if (!in_array($requestMethodParameterType, ['array', 'string'], true)) {
-                $message = sprintf(
-                    'Request method must be string or array but %s given.',
-                    $requestMethodParameterType);
-                throw new InvalidArgumentException($message);
-            }
-            if (!in_array(strtoupper($requestMethod), self::$validRequestMethods, true)) {
-                $message = sprintf('%s is not valid Http request method.', $requestMethod);
-                throw new UnexpectedValueException($message);
-            }
+            $this->checkRequestMethodParameterType($requestMethod);
+            $this->checkRequestMethodIsValid($requestMethod);
             if ($alias !== null) {
                 $this->aliases[$alias] = $route;
             }
@@ -189,10 +180,8 @@ final class Router
      */
     public function __call(string $method, array $args)
     {
-        if (!in_array(strtoupper($method), self::$validRequestMethods, true)) {
-            $message = sprintf('%s is not valid Http request method.', $method);
-            throw new UnexpectedValueException($message);
-        }
+
+        $this->checkRequestMethodIsValid($method);
         $defaults = [
             null,
             null,
@@ -201,6 +190,34 @@ final class Router
         ];
         list($route, $action, $returnType, $alias) = array_merge($args, $defaults);
         $this->add($method, $route, $action, $returnType, $alias);
+    }
+
+    /**
+     * @param string $requestMethod
+     * Checks if request method is valid
+     * @throws UnexpectedValueException;
+     */
+    private function checkRequestMethodIsValid(string $requestMethod)
+    {
+        if (!in_array(strtoupper($requestMethod), self::$validRequestMethods, true)) {
+            $message = sprintf('%s is not valid Http request method.', $requestMethod);
+            throw new UnexpectedValueException($message);
+        }
+    }
+
+    /**
+     * @param $requestMethod
+     * @throws InvalidArgumentException
+     */
+    private function checkRequestMethodParameterType($requestMethod)
+    {
+        $requestMethodParameterType = gettype($requestMethod);
+        if (!in_array($requestMethodParameterType, ['array', 'string'], true)) {
+            $message = sprintf(
+                'Request method must be string or array but %s given.',
+                $requestMethodParameterType);
+            throw new InvalidArgumentException($message);
+        }
     }
 
     /**
