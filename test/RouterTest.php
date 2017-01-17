@@ -57,19 +57,19 @@ class MyRouterClass extends \PHPUnit_Framework_TestCase
             $this->request->getUri()->getPath(),
             $this->config['folder']
         );
-        $router->add('get', '/', 'app/main',null, 'home');
+        $router->add('get', '/', 'app/main', null, 'home');
         $router->add('get', '/json', 'app/json', 'json');
         $router->add('post', '/json', 'app/redirect', 'redirect');
         $router->add('get', '/alias', 'app/alias', null, 'alias');
         $reflector = new ReflectionObject($router);
         $method = $reflector->getMethod('extractFolder');
         $method->setAccessible(true);
-        $result = $method->invoke($router, $requestedPath, $folder );
+        $result = $method->invoke($router, $requestedPath, $folder);
         $this->assertEquals(
             $expected,
             $result,
             'extractFolder did not correctly extract the requested path for sub folder'
-         );
+        );
     }
 
     public function extractFolderDataProvider()
@@ -92,7 +92,7 @@ class MyRouterClass extends \PHPUnit_Framework_TestCase
             $this->request->getUri()->getPath(),
             $this->config['folder']
         );
-        $router->add('get', '/', 'app/main',null, 'home');
+        $router->add('get', '/', 'app/main', null, 'home');
         $router->add('get', '/json', 'app/json', 'json');
         $router->add('post', '/json', 'app/redirect', 'redirect');
         $router->add('get', '/alias', 'app/alias', null, 'alias');
@@ -130,7 +130,11 @@ class MyRouterClass extends \PHPUnit_Framework_TestCase
         $this->assertEquals('/', $routeInfo['aliases']['home'], "Router didn't correctly return aliases");
         $this->assertEquals('/alias', $routeInfo['aliases']['alias'], "Router didn't correctly return aliases");
         $this->assertArrayHasKey('controller', $routeInfo['route'], "Router didn't correctly return route data");
-        $this->assertEquals('app/alias', $routeInfo['route']['controller'], "Router didn't correctly return router data");
+        $this->assertEquals(
+            'app/alias',
+            $routeInfo['route']['controller'],
+            "Router didn't correctly return router data"
+        );
         $this->assertEquals('json', $routeInfo['route']['returnType'], "Router didn't correctly return router data");
     }
 
@@ -138,7 +142,7 @@ class MyRouterClass extends \PHPUnit_Framework_TestCase
      * @test
      * @expectedException UnexpectedValueException
      */
-    public function shouldThrowUnexpectedValueExceptionFor__callMethod()
+    public function shouldThrowUnexpectedValueExceptionForCallMethod()
     {
         $router = new Selami\Router(
             $this->config['default_return_type'],
@@ -146,14 +150,14 @@ class MyRouterClass extends \PHPUnit_Framework_TestCase
             $this->request->getUri()->getPath(),
             $this->config['folder']
         );
-        $router->nonAvalibleHTTPMethod('/', 'app/main',null, 'home');
+        $router->nonAvalibleHTTPMethod('/', 'app/main', null, 'home');
     }
 
     /**
      * @test
      * @expectedException UnexpectedValueException
      */
-    public function shouldThrowUnexpectedValueExceptionFor__constructorMethod()
+    public function shouldThrowUnexpectedValueExceptionForConstructorMethod()
     {
         $router = new Selami\Router(
             $this->config['default_return_type'],
@@ -175,7 +179,7 @@ class MyRouterClass extends \PHPUnit_Framework_TestCase
             $this->request->getUri()->getPath(),
             $this->config['folder']
         );
-        $router->add('nonAvailableHTTPMethod','/', 'app/main',null, 'home');
+        $router->add('nonAvailableHTTPMethod', '/', 'app/main', null, 'home');
     }
 
     /**
@@ -190,7 +194,7 @@ class MyRouterClass extends \PHPUnit_Framework_TestCase
             $this->request->getUri()->getPath(),
             $this->config['folder']
         );
-        $router->add(200,'/', 'app/main',null, 'home');
+        $router->add(200, '/', 'app/main', null, 'home');
     }
 
 
@@ -208,7 +212,7 @@ class MyRouterClass extends \PHPUnit_Framework_TestCase
             $this->config['folder']
         );
 
-        $router->add('get', '/', 'app/main',null, 'home');
+        $router->add('get', '/', 'app/main', null, 'home');
         $router->add('get', '/json', 'app/json', 'json');
         $router->add('post', '/json', 'app/redirect', 'redirect');
         $router->add('get', '/alias', 'app/alias', null, 'alias');
@@ -231,7 +235,7 @@ class MyRouterClass extends \PHPUnit_Framework_TestCase
             $this->config['folder']
         );
 
-        $router->add('get', '/', 'app/main',null, 'home');
+        $router->add('get', '/', 'app/main', null, 'home');
         $router->add('get', '/json', 'app/json', 'json');
         $router->add('post', '/json', 'app/redirect', 'redirect');
         $router->add('get', '/alias', 'app/alias', null, 'alias');
