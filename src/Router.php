@@ -1,7 +1,7 @@
 <?php
 /**
  * Selami Router
- * PHP version 7+
+ * PHP version 7.1+
  *
  * @license https://github.com/selamiphp/router/blob/master/LICENSE (MIT License)
  * @link https://github.com/selamiphp/router
@@ -138,7 +138,7 @@ final class Router
      * @param string $folder
      * @return string
      */
-    private function extractFolder(string $requestPath, string $folder)
+    private function extractFolder(string $requestPath, string $folder) : string
     {
         if (!empty($folder)) {
             $requestPath = '/' . trim(preg_replace('#^/' . $folder . '#msi', '/', $requestPath), '/');
@@ -159,7 +159,7 @@ final class Router
      * @throws InvalidArgumentException
      * @throws UnexpectedValueException
      */
-    public function add($requestMethods, string $route, string $action, string $returnType = null, string $alias = null)
+    public function add($requestMethods, string $route, string $action, ?string $returnType = null, ?string $alias = null)
     {
         $requestMethodsGiven = is_array($requestMethods) ? (array) $requestMethods : [0 => $requestMethods];
         $returnType = $this->determineReturnType($returnType);
@@ -179,7 +179,7 @@ final class Router
      * @throws UnexpectedValueException
      * @throws InvalidArgumentException
      */
-    public function __call(string $method, array $args)
+    public function __call(string $method, array $args) : void
     {
 
         $this->checkRequestMethodIsValid($method);
@@ -189,7 +189,7 @@ final class Router
             $this->defaultReturnType,
             null
         ];
-        list($route, $action, $returnType, $alias) = array_merge($args, $defaults);
+        [$route, $action, $returnType, $alias] = array_merge($args, $defaults);
         $this->add($method, $route, $action, $returnType, $alias);
     }
 
@@ -197,7 +197,7 @@ final class Router
      * @param string|null $returnType
      * @return string
      */
-    private function determineReturnType(string $returnType)
+    private function determineReturnType(?string $returnType) : string
     {
         if ($returnType === null) {
             return $this->defaultReturnType;
@@ -210,7 +210,7 @@ final class Router
      * Checks if request method is valid
      * @throws UnexpectedValueException;
      */
-    private function checkRequestMethodIsValid(string $requestMethod)
+    private function checkRequestMethodIsValid(string $requestMethod) : void
     {
         if (!in_array(strtoupper($requestMethod), self::$validRequestMethods, true)) {
             $message = sprintf('%s is not valid Http request method.', $requestMethod);
@@ -222,7 +222,7 @@ final class Router
      * @param $requestMethod
      * @throws InvalidArgumentException
      */
-    private function checkRequestMethodParameterType($requestMethod)
+    private function checkRequestMethodParameterType($requestMethod) : void
     {
         $requestMethodParameterType = gettype($requestMethod);
         if (!in_array($requestMethodParameterType, ['array', 'string'], true)) {
@@ -263,7 +263,7 @@ final class Router
         foreach ($this->routes as $definedRoute) {
             $definedRoute[3] = $definedRoute[3] ?? $this->defaultReturnType;
             $route->addRoute(strtoupper($definedRoute[0]), $definedRoute[1], function ($args) use ($definedRoute) {
-                list(,,$controller, $returnType) = $definedRoute;
+                [$null1, $null2, $controller, $returnType] = $definedRoute;
                 $returnType = Router::$translations[$returnType] ?? $this->defaultReturnType;
                 return  ['controller' => $controller, 'returnType'=> $returnType, 'args'=> $args];
             });
@@ -274,8 +274,9 @@ final class Router
 
     /**
      * Get router data that includes route info and aliases
+     * @return array
      */
-    public function getRoute()
+    public function getRoute() : array
     {
         $dispatcher = $this->dispatcher();
         $routeInfo  = $dispatcher->dispatch($this->method, $this->requestedPath);
@@ -292,7 +293,7 @@ final class Router
      * @param array $routeInfo
      * @return array $routerData
      */
-    private function runDispatcher(array $routeInfo)
+    private function runDispatcher(array $routeInfo) : array
     {
         $routeData = $this->getRouteData($routeInfo);
         $dispatchResults = [
@@ -314,10 +315,10 @@ final class Router
      * @param array $routeInfo
      * @return array
      */
-    private function getRouteData(array $routeInfo)
+    private function getRouteData(array $routeInfo) : array
     {
         if ($routeInfo[0] === FastRoute\Dispatcher::FOUND) {
-            list(, $handler, $vars) = $routeInfo;
+            [$null1, $handler, $vars] = $routeInfo;
             return $handler($vars);
         }
         return [
