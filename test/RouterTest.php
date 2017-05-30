@@ -7,8 +7,9 @@ use Zend\Diactoros\ServerRequestFactory;
 use ReflectionObject;
 use UnexpectedValueException;
 use InvalidArgumentException;
+use PHPUnit\Framework\TestCase;
 
-class MyRouterClass extends \PHPUnit_Framework_TestCase
+class MyRouterClass extends TestCase
 {
     private $config = [
         'folder'                => '',
