@@ -159,10 +159,10 @@ final class Router
      * @throws InvalidArgumentException
      * @throws UnexpectedValueException
      */
-    public function add($requestMethods, string $route, string $action, string $returnType=null, string $alias=null)
+    public function add($requestMethods, string $route, string $action, string $returnType = null, string $alias = null)
     {
         $requestMethodsGiven = is_array($requestMethods) ? (array) $requestMethods : [0 => $requestMethods];
-        $returnType = $this->checkReturnType($returnType);
+        $returnType = $this->determineReturnType($returnType);
         foreach ($requestMethodsGiven as $requestMethod) {
             $this->checkRequestMethodParameterType($requestMethod);
             $this->checkRequestMethodIsValid($requestMethod);
@@ -177,6 +177,7 @@ final class Router
      * @param string $method
      * @param array $args
      * @throws UnexpectedValueException
+     * @throws InvalidArgumentException
      */
     public function __call(string $method, array $args)
     {
@@ -196,8 +197,12 @@ final class Router
      * @param string|null $returnType
      * @return string
      */
-    private function checkReturnType($returnType) {
-        return $returnType === null ? $this->defaultReturnType : self::$validReturnTypes[$returnType] ?? $this->defaultReturnType;
+    private function determineReturnType(string $returnType)
+    {
+        if ($returnType === null) {
+            return $this->defaultReturnType;
+        }
+        return in_array($returnType, self::$validReturnTypes, true) ? $returnType : $this->defaultReturnType;
     }
 
     /**
@@ -223,7 +228,8 @@ final class Router
         if (!in_array($requestMethodParameterType, ['array', 'string'], true)) {
             $message = sprintf(
                 'Request method must be string or array but %s given.',
-                $requestMethodParameterType);
+                $requestMethodParameterType
+            );
             throw new InvalidArgumentException($message);
         }
     }
