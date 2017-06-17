@@ -54,14 +54,25 @@ final class Router
 
     /**
      * Default return type if not noted in the $routes
+     *
      * @var string
      */
     private $defaultReturnType;
 
+    /**
+     * @var null|string
+     */
+    private $cachedFile;
+
+    /**
+     * @var array
+     */
+    private $routerClosures = [];
 
     /**
      * Translation array.
      * Make sures about return type.
+     *
      * @var array
      */
     private static $translations = [
@@ -115,21 +126,24 @@ final class Router
      * @param string $method
      * @param string $requestedPath
      * @param string $folder
+     * @param string $cachedFile
      * @throws UnexpectedValueException
      */
     public function __construct(
         string $defaultReturnType,
         string $method,
         string $requestedPath,
-        string $folder = ''
+        string $folder = '',
+        ?string $cachedFile = null
     ) {
         if (!in_array($method, self::$validRequestMethods, true)) {
             $message = sprintf('%s is not valid Http request method.', $method);
             throw new UnexpectedValueException($message);
         }
-        $this->method   = $method;
-        $this->requestedPath     = $this->extractFolder($requestedPath, $folder);
+        $this->method = $method;
+        $this->requestedPath = $this->extractFolder($requestedPath, $folder);
         $this->defaultReturnType = self::$translations[$defaultReturnType] ?? self::$validReturnTypes[0];
+        $this->cachedFile = $cachedFile;
     }
 
     /**
@@ -236,14 +250,22 @@ final class Router
 
     /**
      * Dispatch against the provided HTTP method verb and URI.
-     * @return array
+     * @return FastRoute\Dispatcher
      */
-    private function dispatcher()
+    private function dispatcher() : FastRoute\Dispatcher
+    {
+        if ($this->cachedFile !== null) {
+            return $this->cachedDispatcher();
+        }
+        return $this->simpleDispatcher();
+    }
+
+    private function simpleDispatcher()
     {
         $options = [
-            'routeParser'   => FastRoute\RouteParser\Std::class,
+            'routeParser' => FastRoute\RouteParser\Std::class,
             'dataGenerator' => FastRoute\DataGenerator\GroupCountBased::class,
-            'dispatcher'    => FastRoute\Dispatcher\GroupCountBased::class,
+            'dispatcher' => FastRoute\Dispatcher\GroupCountBased::class,
             'routeCollector' => FastRoute\RouteCollector::class,
         ];
         /** @var RouteCollector $routeCollector */
@@ -251,22 +273,55 @@ final class Router
             new $options['routeParser'], new $options['dataGenerator']
         );
         $this->addRoutes($routeCollector);
+
         return new $options['dispatcher']($routeCollector->getData());
+    }
+
+    private function cachedDispatcher()
+    {
+        $options = [
+            'routeParser' => FastRoute\RouteParser\Std::class,
+            'dataGenerator' => FastRoute\DataGenerator\GroupCountBased::class,
+            'dispatcher' => FastRoute\Dispatcher\GroupCountBased::class,
+            'routeCollector' => FastRoute\RouteCollector::class
+        ];
+        if (file_exists($this->cachedFile)) {
+            $dispatchData = require $this->cachedFile;
+            if (!is_array($dispatchData)) {
+                throw new \RuntimeException('Invalid cache file "' . $options['cacheFile'] . '"');
+            }
+            return new $options['dispatcher']($dispatchData);
+        }
+        $routeCollector = new $options['routeCollector'](
+            new $options['routeParser'], new $options['dataGenerator']
+        );
+        $this->addRoutes($routeCollector);
+        /** @var RouteCollector $routeCollector */
+        $dispatchData = $routeCollector->getData();
+        file_put_contents(
+            $this->cachedFile,
+            '<?php return ' . var_export($dispatchData, true) . ';'
+        );
+        return new $options['dispatcher']($dispatchData );
     }
 
     /**
      * Define Closures for all routes that returns controller info to be used.
      * @param FastRoute\RouteCollector $route
      */
-    private function addRoutes(FastRoute\RouteCollector $route)
+    private function addRoutes(FastRoute\RouteCollector $route) : void
     {
+        $routeIndex=0;
         foreach ($this->routes as $definedRoute) {
             $definedRoute[3] = $definedRoute[3] ?? $this->defaultReturnType;
-            $route->addRoute(strtoupper($definedRoute[0]), $definedRoute[1], function ($args) use ($definedRoute) {
-                [$null1, $null2, $controller, $returnType] = $definedRoute;
-                $returnType = Router::$translations[$returnType] ?? $this->defaultReturnType;
+            $routeName = 'routeClosure'.$routeIndex;
+            [$null1, $null2, $controller, $returnType] = $definedRoute;
+            $returnType = Router::$translations[$returnType] ?? $this->defaultReturnType;
+            $this->routerClosures[$routeName] = function($args) use ($controller, $returnType) {
                 return  ['controller' => $controller, 'returnType'=> $returnType, 'args'=> $args];
-            });
+            };
+            $route->addRoute(strtoupper($definedRoute[0]), $definedRoute[1], $routeName);
+            $routeIndex++;
         }
     }
 
@@ -280,8 +335,9 @@ final class Router
     {
         $dispatcher = $this->dispatcher();
         $routeInfo  = $dispatcher->dispatch($this->method, $this->requestedPath);
+        $route = $this->runDispatcher($routeInfo);
         $routerData = [
-            'route'     => $this->runDispatcher($routeInfo),
+            'route'     => $route,
             'aliases'   => $this->aliases
         ];
         return $routerData;
@@ -319,7 +375,7 @@ final class Router
     {
         if ($routeInfo[0] === FastRoute\Dispatcher::FOUND) {
             [$null1, $handler, $vars] = $routeInfo;
-            return $handler($vars);
+            return $this->routerClosures[$handler]($vars);
         }
         return [
             'status'        => 200,

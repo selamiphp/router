@@ -18,11 +18,12 @@ class MyRouterClass extends TestCase
 
     private $request;
 
-    public function setUp()
+    public function setUp() : void
     {
         $basedir = dirname(__DIR__) . '/app';
         $this->config['base_dir']   = $basedir;
         $this->config['app_dir']    = $basedir;
+        $this->config['cache_file']    = '/tmp/fastroute.cache';
         $_SERVER                    = [];
         $_FILES                     = [];
         $_GET                       = [];
@@ -50,7 +51,7 @@ class MyRouterClass extends TestCase
      * @param $folder string
      * @param $expected string
      */
-    public function shouldExtractRouteFromURLSuccessfully($requestedPath, $folder, $expected)
+    public function shouldExtractRouteFromURLSuccessfully($requestedPath, $folder, $expected) : void
     {
         $router = new Selami\Router(
             $this->config['default_return_type'],
@@ -73,13 +74,32 @@ class MyRouterClass extends TestCase
         );
     }
 
-    public function extractFolderDataProvider()
+    public function extractFolderDataProvider() : array
     {
         return [
             ['/', '', '/'],
             ['', '', '/'],
             ['/admin/dashboard', 'admin', '/dashboard']
         ];
+    }
+
+    /**
+     * @test
+     */
+    public function shouldCacheRoutesSuccessfully() : void
+    {
+        $router = new Selami\Router(
+            $this->config['default_return_type'],
+            $this->request->getMethod(),
+            $this->request->getUri()->getPath(),
+            $this->config['folder'],
+            $this->config['cache_file']
+        );
+        $router->add('get', '/', 'app/main', 'html', 'home');
+        $router->getRoute();
+        $this->assertFileExists($this->config['cache_file'],
+            'Couldn\'t cache the file'
+        );
     }
 
     /**
@@ -198,7 +218,6 @@ class MyRouterClass extends TestCase
         $router->add(200, '/', 'app/main', null, 'home');
     }
 
-
     /**
      * @test
      */
@@ -212,7 +231,6 @@ class MyRouterClass extends TestCase
             $this->request->getUri()->getPath(),
             $this->config['folder']
         );
-
         $router->add('get', '/', 'app/main', null, 'home');
         $router->add('get', '/json', 'app/json', 'json');
         $router->add('post', '/json', 'app/redirect', 'redirect');
@@ -235,12 +253,18 @@ class MyRouterClass extends TestCase
             $this->request->getUri()->getPath(),
             $this->config['folder']
         );
-
         $router->add('get', '/', 'app/main', null, 'home');
         $router->add('get', '/json', 'app/json', 'json');
         $router->add('post', '/json', 'app/redirect', 'redirect');
         $router->add('get', '/alias', 'app/alias', null, 'alias');
         $routeInfo = $router->getRoute();
         $this->assertEquals('404', $routeInfo['route']['status'], "Router didn't correctly returnNot FOund");
+    }
+
+    public function tearDown()
+    {
+        if (file_exists($this->config['cache_file'])) {
+            unlink($this->config['cache_file']);
+        }
     }
 }
