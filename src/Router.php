@@ -173,7 +173,13 @@ final class Router
      * @throws InvalidArgumentException
      * @throws UnexpectedValueException
      */
-    public function add($requestMethods, string $route, string $action, ?string $returnType = null, ?string $alias = null)
+    public function add(
+        $requestMethods,
+        string $route,
+        string $action,
+        ?string $returnType = null,
+        ?string $alias = null
+    ) : void
     {
         $requestMethodsGiven = is_array($requestMethods) ? (array) $requestMethods : [0 => $requestMethods];
         $returnType = $this->determineReturnType($returnType);
@@ -195,7 +201,6 @@ final class Router
      */
     public function __call(string $method, array $args) : void
     {
-
         $this->checkRequestMethodIsValid($method);
         $defaults = [
             null,
@@ -254,13 +259,15 @@ final class Router
      */
     private function dispatcher() : FastRoute\Dispatcher
     {
+
+        $this->setRouteClosures();
         if ($this->cachedFile !== null) {
             return $this->cachedDispatcher();
         }
         return $this->simpleDispatcher();
     }
 
-    private function simpleDispatcher()
+    private function simpleDispatcher() : FastRoute\Dispatcher\GroupCountBased
     {
         $options = [
             'routeParser' => FastRoute\RouteParser\Std::class,
@@ -277,7 +284,7 @@ final class Router
         return new $options['dispatcher']($routeCollector->getData());
     }
 
-    private function cachedDispatcher()
+    private function cachedDispatcher() : FastRoute\Dispatcher\GroupCountBased
     {
         $options = [
             'routeParser' => FastRoute\RouteParser\Std::class,
@@ -315,12 +322,21 @@ final class Router
         foreach ($this->routes as $definedRoute) {
             $definedRoute[3] = $definedRoute[3] ?? $this->defaultReturnType;
             $routeName = 'routeClosure'.$routeIndex;
+            $route->addRoute(strtoupper($definedRoute[0]), $definedRoute[1], $routeName);
+            $routeIndex++;
+        }
+    }
+    private function setRouteClosures() : void
+    {
+        $routeIndex=0;
+        foreach ($this->routes as $definedRoute) {
+            $definedRoute[3] = $definedRoute[3] ?? $this->defaultReturnType;
+            $routeName = 'routeClosure'.$routeIndex;
             [$null1, $null2, $controller, $returnType] = $definedRoute;
             $returnType = Router::$translations[$returnType] ?? $this->defaultReturnType;
-            $this->routerClosures[$routeName] = function($args) use ($controller, $returnType) {
+            $this->routerClosures[$routeName]= function($args) use ($controller, $returnType) {
                 return  ['controller' => $controller, 'returnType'=> $returnType, 'args'=> $args];
             };
-            $route->addRoute(strtoupper($definedRoute[0]), $definedRoute[1], $routeName);
             $routeIndex++;
         }
     }
