@@ -2,18 +2,19 @@
 
 namespace tests;
 
-use Selami;
+use Selami\Router;
 use Zend\Diactoros\ServerRequestFactory;
 use ReflectionObject;
 use UnexpectedValueException;
 use InvalidArgumentException;
 use PHPUnit\Framework\TestCase;
 
+
 class MyRouterClass extends TestCase
 {
     private $config = [
         'folder'                => '',
-        'default_return_type'   =>'html'
+        'default_return_type'   => Router::HTML
     ];
 
     private $request;
@@ -36,7 +37,7 @@ class MyRouterClass extends TestCase
         $_SERVER['SERVER_PROTOCOL'] = 'HTTP/1.1';
         $_SERVER['SERVER_NAME']     = 'Selami';
         $_SERVER['SERVER_PORT']     = '8080';
-        $_SERVER['REQUEST_METHOD']  = 'GET';
+        $_SERVER['REQUEST_METHOD']  = Router::GET;
         $_SERVER['QUERY_STRING']    = 'p1=1&p2=2';
         $_SERVER['HTTPS']           = '';
         $_SERVER['REMOTE_ADDR']     = '127.0.0.1';
@@ -53,16 +54,16 @@ class MyRouterClass extends TestCase
      */
     public function shouldExtractRouteFromURLSuccessfully($requestedPath, $folder, $expected) : void
     {
-        $router = new Selami\Router(
+        $router = new Router(
             $this->config['default_return_type'],
             $this->request->getMethod(),
             $this->request->getUri()->getPath(),
             $this->config['folder']
         );
-        $router->add('get', '/', 'app/main', null, 'home');
-        $router->add('get', '/json', 'app/json', 'json');
-        $router->add('post', '/json', 'app/redirect', 'redirect');
-        $router->add('get', '/alias', 'app/alias', null, 'alias');
+        $router->add(Router::GET, '/', 'app/main', null, 'home');
+        $router->add(Router::GET, '/json', 'app/json', Router::JSON);
+        $router->add(Router::POST, '/json', 'app/redirect', Router::REDIRECT);
+        $router->add(Router::GET, '/alias', 'app/alias', null, 'alias');
         $reflector = new ReflectionObject($router);
         $method = $reflector->getMethod('extractFolder');
         $method->setAccessible(true);
@@ -88,14 +89,14 @@ class MyRouterClass extends TestCase
      */
     public function shouldCacheRoutesSuccessfully() : void
     {
-        $router = new Selami\Router(
+        $router = new Router(
             $this->config['default_return_type'],
             $this->request->getMethod(),
             $this->request->getUri()->getPath(),
             $this->config['folder'],
             $this->config['cache_file']
         );
-        $router->add('get', '/', 'app/main', 'html', 'home');
+        $router->add(Router::GET, '/', 'app/main', Router::HTML, 'home');
         $router->getRoute();
         $this->assertFileExists($this->config['cache_file'],
             'Couldn\'t cache the file'
@@ -105,21 +106,21 @@ class MyRouterClass extends TestCase
     /**
      * @test
      */
-    public function shouldCorrectlyInstantiateRouter()
+    public function shouldCorrectlyInstantiateRouter() : void
     {
-        $router = new Selami\Router(
+        $router = new Router(
             $this->config['default_return_type'],
             $this->request->getMethod(),
             $this->request->getUri()->getPath(),
             $this->config['folder']
         );
-        $router->add('get', '/', 'app/main', null, 'home');
-        $router->add('get', '/json', 'app/json', 'json');
-        $router->add('post', '/json', 'app/redirect', 'redirect');
-        $router->add('get', '/alias', 'app/alias', null, 'alias');
-        $this->assertInstanceOf('Selami\Router', $router);
+        $router->add(Router::GET, '/', 'app/main', null, 'home');
+        $router->add(Router::GET, '/json', 'app/json', Router::JSON);
+        $router->add(Router::POST, '/json', 'app/redirect', Router::REDIRECT);
+        $router->add(Router::GET, '/alias', 'app/alias', null, 'alias');
+        $this->assertInstanceOf(Router::class, $router);
         $this->assertAttributeContains(
-            'GET',
+            Router::GET,
             'method',
             $router,
             "Router didn't correctly return method as GET."
@@ -129,19 +130,19 @@ class MyRouterClass extends TestCase
     /**
      * @test
      */
-    public function shouldCorrectlyReturnRouteAndRouteAliases()
+    public function shouldCorrectlyReturnRouteAndRouteAliases() : void
     {
-        $router = new Selami\Router(
-            'json',
+        $router = new Router(
+            Router::JSON,
             $this->request->getMethod(),
             $this->request->getUri()->getPath(),
             $this->config['folder']
         );
 
         $router->get('/', 'app/main', null, 'home');
-        $router->get('/json', 'app/json', 'json');
+        $router->get('/json', 'app/json', Router::JSON);
         $router->get('/html', 'app/json');
-        $router->post('/json', 'app/redirect', 'redirect');
+        $router->post('/json', 'app/redirect', Router::REDIRECT);
         $router->get('/alias', 'app/alias', null, 'alias');
         $routeInfo = $router->getRoute();
         $this->assertArrayHasKey('aliases', $routeInfo, "Router didn't correctly return route data");
@@ -156,16 +157,16 @@ class MyRouterClass extends TestCase
             $routeInfo['route']['controller'],
             "Router didn't correctly return router data"
         );
-        $this->assertEquals('json', $routeInfo['route']['returnType'], "Router didn't correctly return router data");
+        $this->assertEquals(Router::JSON, $routeInfo['route']['returnType'], "Router didn't correctly return router data");
     }
 
     /**
      * @test
      * @expectedException UnexpectedValueException
      */
-    public function shouldThrowUnexpectedValueExceptionForCallMethod()
+    public function shouldThrowUnexpectedValueExceptionForCallMethod() : void
     {
-        $router = new Selami\Router(
+        $router = new Router(
             $this->config['default_return_type'],
             $this->request->getMethod(),
             $this->request->getUri()->getPath(),
@@ -178,9 +179,9 @@ class MyRouterClass extends TestCase
      * @test
      * @expectedException UnexpectedValueException
      */
-    public function shouldThrowUnexpectedValueExceptionForConstructorMethod()
+    public function shouldThrowUnexpectedValueExceptionForConstructorMethod() : void
     {
-        $router = new Selami\Router(
+        $router = new Router(
             $this->config['default_return_type'],
             'UNEXPECTEDVALUE',
             $this->request->getUri()->getPath(),
@@ -192,9 +193,9 @@ class MyRouterClass extends TestCase
      * @test
      * @expectedException UnexpectedValueException
      */
-    public function shouldThrowUnexpectedValueExceptionForAddMethod()
+    public function shouldThrowUnexpectedValueExceptionForAddMethod() : void
     {
-        $router = new Selami\Router(
+        $router = new Router(
             $this->config['default_return_type'],
             $this->request->getMethod(),
             $this->request->getUri()->getPath(),
@@ -207,9 +208,9 @@ class MyRouterClass extends TestCase
      * @test
      * @expectedException InvalidArgumentException
      */
-    public function shouldThrowInvalidArgumentExceptionForAddMethodIfREquestMEthotIsNotStringOrArray()
+    public function shouldThrowInvalidArgumentExceptionForAddMethodIfREquestMEthotIsNotStringOrArray() : void
     {
-        $router = new Selami\Router(
+        $router = new Router(
             $this->config['default_return_type'],
             $this->request->getMethod(),
             $this->request->getUri()->getPath(),
@@ -221,20 +222,20 @@ class MyRouterClass extends TestCase
     /**
      * @test
      */
-    public function shouldCorrectlyReturnMethodNotAllowed()
+    public function shouldCorrectlyReturnMethodNotAllowed() : void
     {
-        $_SERVER['REQUEST_METHOD'] = 'POST';
+        $_SERVER['REQUEST_METHOD'] = Router::POST;
         $this->request = ServerRequestFactory::fromGlobals($_SERVER, $_GET, $_POST, $_COOKIE, $_FILES);
-        $router = new Selami\Router(
+        $router = new Router(
             $this->config['default_return_type'],
             $this->request->getMethod(),
             $this->request->getUri()->getPath(),
             $this->config['folder']
         );
-        $router->add('get', '/', 'app/main', null, 'home');
-        $router->add('get', '/json', 'app/json', 'json');
-        $router->add('post', '/json', 'app/redirect', 'redirect');
-        $router->add('get', '/alias', 'app/alias', null, 'alias');
+        $router->add(Router::GET, '/', 'app/main', null, 'home');
+        $router->add(Router::GET, '/json', 'app/json', Router::JSON);
+        $router->add(Router::POST, '/json', 'app/redirect', Router::REDIRECT);
+        $router->add(Router::GET, '/alias', 'app/alias', null, 'alias');
         $routeInfo = $router->getRoute();
         $this->assertEquals('405', $routeInfo['route']['status'], "Router didn't correctly return Method Not Allowed");
     }
@@ -242,26 +243,26 @@ class MyRouterClass extends TestCase
     /**
      * @test
      */
-    public function shouldCorrectlyReturnNotFound()
+    public function shouldCorrectlyReturnNotFound() : void
     {
         $_SERVER['REQUEST_URI'] = '/notexists';
-        $_SERVER['REQUEST_METHOD'] = 'POST';
+        $_SERVER['REQUEST_METHOD'] = Router::POST;
         $this->request = ServerRequestFactory::fromGlobals($_SERVER, $_GET, $_POST, $_COOKIE, $_FILES);
-        $router = new Selami\Router(
+        $router = new Router(
             $this->config['default_return_type'],
             $this->request->getMethod(),
             $this->request->getUri()->getPath(),
             $this->config['folder']
         );
-        $router->add('get', '/', 'app/main', null, 'home');
-        $router->add('get', '/json', 'app/json', 'json');
-        $router->add('post', '/json', 'app/redirect', 'redirect');
-        $router->add('get', '/alias', 'app/alias', null, 'alias');
+        $router->add(Router::GET, '/', 'app/main', null, 'home');
+        $router->add(Router::GET, '/json', 'app/json', Router::JSON);
+        $router->add(Router::POST, '/json', 'app/redirect', Router::REDIRECT);
+        $router->add(Router::GET, '/alias', 'app/alias', null, 'alias');
         $routeInfo = $router->getRoute();
         $this->assertEquals('404', $routeInfo['route']['status'], "Router didn't correctly returnNot FOund");
     }
 
-    public function tearDown()
+    public function tearDown() : void
     {
         if (file_exists($this->config['cache_file'])) {
             unlink($this->config['cache_file']);

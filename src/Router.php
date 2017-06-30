@@ -3,10 +3,11 @@
  * Selami Router
  * PHP version 7.1+
  *
- * @license https://github.com/selamiphp/router/blob/master/LICENSE (MIT License)
- * @link https://github.com/selamiphp/router
- * @package router
- * @category library
+ * @category Library
+ * @package  Router
+ * @author   Mehmet Korkmaz <mehmet@mkorkmaz.com>
+ * @license  https://github.com/selamiphp/router/blob/master/LICENSE (MIT License)
+ * @link     https://github.com/selamiphp/router
  */
 
 declare(strict_types = 1);
@@ -25,29 +26,49 @@ use UnexpectedValueException;
  */
 final class Router
 {
+    const HTML = 1;
+    const JSON = 2;
+    const TEXT = 3;
+    const XML = 4;
+    const REDIRECT = 5;
+    const DOWNLOAD = 6;
+    const CUSTOM = 7;
+
+    const OPTIONS = 'OPTIONS';
+    const HEAD = 'HEAD';
+    const GET = 'GET';
+    const POST = 'POST';
+    const PUT = 'PUT';
+    const DELETE = 'DELETE';
+    const PATCH = 'PATCH';
+
     /**
-     * routes array to be registered.
+     * Routes array to be registered.
      * Some routes may have aliases to be used in templating system
      * Route item can be defined using array key as an alias key.
+     * Each route item is an array has items respectively: Request Method, Request Uri, Controller/Action, Return Type.
+     *
      * @var array
      */
     private $routes = [];
 
     /**
-     * aliases array to be registered.
-     * Each route item is an array has items respectively : Request Method, Request Uri, Controller/Action, Return Type.
+     * Aliases array to be registered.
+     *
      * @var array
      */
     private $aliases = [];
 
     /**
      * HTTP request Method
+     *
      * @var string
      */
     private $method;
 
     /**
      * Request Uri
+     *
      * @var string
      */
     private $requestedPath;
@@ -70,27 +91,9 @@ final class Router
     private $routerClosures = [];
 
     /**
-     * Translation array.
-     * Make sures about return type.
-     *
-     * @var array
-     */
-    private static $translations = [
-        'h'     => 'html',
-        'html'  => 'html',
-        'r'     => 'redirect',
-        'redirect' => 'redirect',
-        'j'     => 'json',
-        'json'  => 'json',
-        't'     => 'text',
-        'text'  => 'text',
-        'd'     => 'download',
-        'download'  => 'download'
-    ];
-
-    /**
      * Valid Request Methods array.
      * Make sures about requested methods.
+     *
      * @var array
      */
     private static $validRequestMethods = [
@@ -103,34 +106,19 @@ final class Router
         'PATCH'
     ];
 
-
-    /**
-     * Valid Request Methods array.
-     * Make sures about return type.
-     * Index 0 is also default value.
-     * @var array
-     */
-    private static $validReturnTypes = [
-        'html',
-        'json',
-        'text',
-        'redirect',
-        'download'
-    ];
-
     /**
      * Router constructor.
      * Create new router.
      *
-     * @param string $defaultReturnType
-     * @param string $method
-     * @param string $requestedPath
-     * @param string $folder
-     * @param string $cachedFile
+     * @param  int    $defaultReturnType
+     * @param  string $method
+     * @param  string $requestedPath
+     * @param  string $folder
+     * @param  string $cachedFile
      * @throws UnexpectedValueException
      */
     public function __construct(
-        string $defaultReturnType,
+        int $defaultReturnType,
         string $method,
         string $requestedPath,
         string $folder = '',
@@ -142,14 +130,15 @@ final class Router
         }
         $this->method = $method;
         $this->requestedPath = $this->extractFolder($requestedPath, $folder);
-        $this->defaultReturnType = self::$translations[$defaultReturnType] ?? self::$validReturnTypes[0];
+        $this->defaultReturnType = ($defaultReturnType >=1 && $defaultReturnType <=7) ? $defaultReturnType : self::HTML;
         $this->cachedFile = $cachedFile;
     }
 
     /**
      * Remove sub folder from requestedPath if defined
-     * @param string $requestPath
-     * @param string $folder
+     *
+     * @param  string $requestPath
+     * @param  string $folder
      * @return string
      */
     private function extractFolder(string $requestPath, string $folder) : string
@@ -164,12 +153,13 @@ final class Router
     }
 
     /**
-     * add route to routes list
-     * @param string|array requestMethods
-     * @param string $route
-     * @param string $action
-     * @param string $returnType
-     * @param string $alias
+     * Add route to routes list
+     *
+     * @param  string|array requestMethods
+     * @param  string                      $route
+     * @param  string                      $action
+     * @param  int                         $returnType
+     * @param  string                      $alias
      * @throws InvalidArgumentException
      * @throws UnexpectedValueException
      */
@@ -177,10 +167,10 @@ final class Router
         $requestMethods,
         string $route,
         string $action,
-        ?string $returnType = null,
+        ?int $returnType = null,
         ?string $alias = null
-    ) : void
-    {
+    ) : void {
+    
         $requestMethodsGiven = is_array($requestMethods) ? (array) $requestMethods : [0 => $requestMethods];
         $returnType = $this->determineReturnType($returnType);
         foreach ($requestMethodsGiven as $requestMethod) {
@@ -195,7 +185,7 @@ final class Router
 
     /**
      * @param string $method
-     * @param array $args
+     * @param array  $args
      * @throws UnexpectedValueException
      * @throws InvalidArgumentException
      */
@@ -213,15 +203,15 @@ final class Router
     }
 
     /**
-     * @param string|null $returnType
-     * @return string
+     * @param int|null $returnType
+     * @return int
      */
-    private function determineReturnType(?string $returnType) : string
+    private function determineReturnType(?int $returnType) : int
     {
         if ($returnType === null) {
             return $this->defaultReturnType;
         }
-        return in_array($returnType, self::$validReturnTypes, true) ? $returnType : $this->defaultReturnType;
+        return ($returnType >=1 && $returnType <=7) ? $returnType : self::HTML;
     }
 
     /**
@@ -255,6 +245,7 @@ final class Router
 
     /**
      * Dispatch against the provided HTTP method verb and URI.
+     *
      * @return FastRoute\Dispatcher
      */
     private function dispatcher() : FastRoute\Dispatcher
@@ -275,7 +266,9 @@ final class Router
             'dispatcher' => FastRoute\Dispatcher\GroupCountBased::class,
             'routeCollector' => FastRoute\RouteCollector::class,
         ];
-        /** @var RouteCollector $routeCollector */
+        /**
+        * @var \FastRoute\RouteCollector $routeCollector
+        */
         $routeCollector = new $options['routeCollector'](
             new $options['routeParser'], new $options['dataGenerator']
         );
@@ -293,7 +286,7 @@ final class Router
             'routeCollector' => FastRoute\RouteCollector::class
         ];
         if (file_exists($this->cachedFile)) {
-            $dispatchData = require $this->cachedFile;
+            $dispatchData = include $this->cachedFile;
             if (!is_array($dispatchData)) {
                 throw new \RuntimeException('Invalid cache file "' . $options['cacheFile'] . '"');
             }
@@ -303,7 +296,9 @@ final class Router
             new $options['routeParser'], new $options['dataGenerator']
         );
         $this->addRoutes($routeCollector);
-        /** @var RouteCollector $routeCollector */
+        /**
+        * @var FastRoute\RouteCollector $routeCollector
+        */
         $dispatchData = $routeCollector->getData();
         file_put_contents(
             $this->cachedFile,
@@ -314,6 +309,7 @@ final class Router
 
     /**
      * Define Closures for all routes that returns controller info to be used.
+     *
      * @param FastRoute\RouteCollector $route
      */
     private function addRoutes(FastRoute\RouteCollector $route) : void
@@ -332,19 +328,18 @@ final class Router
         foreach ($this->routes as $definedRoute) {
             $definedRoute[3] = $definedRoute[3] ?? $this->defaultReturnType;
             $routeName = 'routeClosure'.$routeIndex;
-            [$null1, $null2, $controller, $returnType] = $definedRoute;
-            $returnType = Router::$translations[$returnType] ?? $this->defaultReturnType;
-            $this->routerClosures[$routeName]= function($args) use ($controller, $returnType) {
+            [$requestMedhod, $url, $controller, $returnType] = $definedRoute;
+            $returnType = ($returnType >=1 && $returnType <=7) ? $returnType : $this->defaultReturnType;
+            $this->routerClosures[$routeName]= function ($args) use ($controller, $returnType) {
                 return  ['controller' => $controller, 'returnType'=> $returnType, 'args'=> $args];
             };
             $routeIndex++;
         }
     }
 
-
-
     /**
      * Get router data that includes route info and aliases
+     *
      * @return array
      */
     public function getRoute() : array
@@ -359,10 +354,10 @@ final class Router
         return $routerData;
     }
 
-
     /**
      * Get route info for requested uri
-     * @param array $routeInfo
+     *
+     * @param  array $routeInfo
      * @return array $routerData
      */
     private function runDispatcher(array $routeInfo) : array
@@ -384,18 +379,19 @@ final class Router
 
     /**
      * Get routeData according to dispatcher's results
-     * @param array $routeInfo
+     *
+     * @param  array $routeInfo
      * @return array
      */
     private function getRouteData(array $routeInfo) : array
     {
         if ($routeInfo[0] === FastRoute\Dispatcher::FOUND) {
-            [$null1, $handler, $vars] = $routeInfo;
+            [$dispatcher, $handler, $vars] = $routeInfo;
             return $this->routerClosures[$handler]($vars);
         }
         return [
             'status'        => 200,
-            'returnType'    => 'html',
+            'returnType'    => Router::HTML,
             'definedRoute'  => null,
             'args'          => []
         ];
