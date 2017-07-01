@@ -17,6 +17,7 @@ namespace Selami;
 use FastRoute;
 use InvalidArgumentException;
 use UnexpectedValueException;
+use RuntimeException;
 
 /**
  * Router
@@ -247,12 +248,12 @@ final class Router
      * Dispatch against the provided HTTP method verb and URI.
      *
      * @return FastRoute\Dispatcher
+     * @throws RuntimeException;
      */
     private function dispatcher() : FastRoute\Dispatcher
     {
-
         $this->setRouteClosures();
-        if ($this->cachedFile !== null) {
+        if ($this->cachedFile !== null && file_exists($this->cachedFile)) {
             return $this->cachedDispatcher();
         }
         return $this->simpleDispatcher();
@@ -260,51 +261,39 @@ final class Router
 
     private function simpleDispatcher() : FastRoute\Dispatcher\GroupCountBased
     {
-        $options = [
-            'routeParser' => FastRoute\RouteParser\Std::class,
-            'dataGenerator' => FastRoute\DataGenerator\GroupCountBased::class,
-            'dispatcher' => FastRoute\Dispatcher\GroupCountBased::class,
-            'routeCollector' => FastRoute\RouteCollector::class,
-        ];
         /**
-        * @var \FastRoute\RouteCollector $routeCollector
-        */
-        $routeCollector = new $options['routeCollector'](
-            new $options['routeParser'], new $options['dataGenerator']
+         * @var \FastRoute\RouteCollector $routeCollector
+         */
+        $routeCollector = new FastRoute\RouteCollector(
+            new FastRoute\RouteParser\Std, new FastRoute\DataGenerator\GroupCountBased
         );
         $this->addRoutes($routeCollector);
-
-        return new $options['dispatcher']($routeCollector->getData());
+        $this->createCachedRoute($routeCollector);
+        return new FastRoute\Dispatcher\GroupCountBased($routeCollector->getData());
     }
 
+    private function createCachedRoute($routeCollector ) : void
+    {
+        if ($this->cachedFile !== null && !file_exists($this->cachedFile)) {
+            /**
+             * @var FastRoute\RouteCollector $routeCollector
+             */
+            $dispatchData = $routeCollector->getData();
+            file_put_contents($this->cachedFile, '<?php return ' . var_export($dispatchData, true) . ';');
+        }
+    }
+
+    /**
+     * @return FastRoute\Dispatcher\GroupCountBased
+     * @throws RuntimeException
+     */
     private function cachedDispatcher() : FastRoute\Dispatcher\GroupCountBased
     {
-        $options = [
-            'routeParser' => FastRoute\RouteParser\Std::class,
-            'dataGenerator' => FastRoute\DataGenerator\GroupCountBased::class,
-            'dispatcher' => FastRoute\Dispatcher\GroupCountBased::class,
-            'routeCollector' => FastRoute\RouteCollector::class
-        ];
-        if (file_exists($this->cachedFile)) {
-            $dispatchData = include $this->cachedFile;
-            if (!is_array($dispatchData)) {
-                throw new \RuntimeException('Invalid cache file "' . $options['cacheFile'] . '"');
-            }
-            return new $options['dispatcher']($dispatchData);
+        $dispatchData = include $this->cachedFile;
+        if (!is_array($dispatchData)) {
+            throw new RuntimeException('Invalid cache file "' . $this->cachedFile . '"');
         }
-        $routeCollector = new $options['routeCollector'](
-            new $options['routeParser'], new $options['dataGenerator']
-        );
-        $this->addRoutes($routeCollector);
-        /**
-        * @var FastRoute\RouteCollector $routeCollector
-        */
-        $dispatchData = $routeCollector->getData();
-        file_put_contents(
-            $this->cachedFile,
-            '<?php return ' . var_export($dispatchData, true) . ';'
-        );
-        return new $options['dispatcher']($dispatchData );
+        return new FastRoute\Dispatcher\GroupCountBased($dispatchData);
     }
 
     /**

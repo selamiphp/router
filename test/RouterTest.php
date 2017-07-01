@@ -102,6 +102,61 @@ class MyRouterClass extends TestCase
             'Couldn\'t cache the file'
         );
     }
+    /**
+     * @test
+     * @expectedException \RuntimeException
+     */
+    public function shouldThrowExceptionForInvalidCachedFile() : void
+    {
+        file_put_contents('/tmp/failed.cache', '');
+        $router = new Router(
+            $this->config['default_return_type'],
+            $this->request->getMethod(),
+            $this->request->getUri()->getPath(),
+            $this->config['folder'],
+            '/tmp/failed.cache'
+        );
+        $router->add(Router::GET, '/', 'app/main', Router::HTML, 'home');
+        $router->getRoute();
+        $this->assertFileExists($this->config['cache_file'],
+            'Couldn\'t cache the file'
+        );
+    }
+
+
+    /**
+     * @test
+     * @dataProvider extractFolderDataProvider
+     * @param $requestedPath string
+     * @param $folder string
+     * @param $expected string
+     */
+    public function shouldReadCacheRoutesSuccessfully($requestedPath, $folder, $expected) : void
+    {
+        $router = new Router(
+            $this->config['default_return_type'],
+            $this->request->getMethod(),
+            $this->request->getUri()->getPath(),
+            $this->config['folder'],
+            $this->config['cache_file']
+        );
+        $router->add(Router::GET, '/', 'app/main', Router::HTML, 'home');
+        $router->getRoute();
+
+        $router->add(Router::GET, '/', 'app/main', null, 'home');
+        $router->add(Router::GET, '/json', 'app/json', Router::JSON);
+        $router->add(Router::POST, '/json', 'app/redirect', Router::REDIRECT);
+        $router->add(Router::GET, '/alias', 'app/alias', null, 'alias');
+        $reflector = new ReflectionObject($router);
+        $method = $reflector->getMethod('extractFolder');
+        $method->setAccessible(true);
+        $result = $method->invoke($router, $requestedPath, $folder);
+        $this->assertEquals(
+            $expected,
+            $result,
+            'extractFolder did not correctly extract the requested path for sub folder'
+        );
+    }
 
     /**
      * @test
@@ -181,7 +236,7 @@ class MyRouterClass extends TestCase
      */
     public function shouldThrowUnexpectedValueExceptionForConstructorMethod() : void
     {
-        $router = new Router(
+        new Router(
             $this->config['default_return_type'],
             'UNEXPECTEDVALUE',
             $this->request->getUri()->getPath(),
@@ -262,10 +317,13 @@ class MyRouterClass extends TestCase
         $this->assertEquals('404', $routeInfo['route']['status'], "Router didn't correctly returnNot FOund");
     }
 
-    public function tearDown() : void
+    public static function tearDownAfterClass() : void
     {
-        if (file_exists($this->config['cache_file'])) {
-            unlink($this->config['cache_file']);
+        if (file_exists('/tmp/fastroute.cache')) {
+            unlink('/tmp/fastroute.cache');
+        }
+        if (file_exists('/tmp/failed.cache')) {
+            unlink('/tmp/failed.cache');
         }
     }
 }
