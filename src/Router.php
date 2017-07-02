@@ -239,7 +239,6 @@ final class Router
         }
     }
 
-
     /**
      * Get router data that includes route info and aliases
      *
@@ -258,5 +257,4 @@ final class Router
         ];
         return $routerData;
     }
-
 }
