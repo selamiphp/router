@@ -9,7 +9,6 @@ use UnexpectedValueException;
 use InvalidArgumentException;
 use PHPUnit\Framework\TestCase;
 
-
 class MyRouterClass extends TestCase
 {
     private $config = [
@@ -98,7 +97,8 @@ class MyRouterClass extends TestCase
         );
         $router->add(Router::GET, '/', 'app/main', Router::HTML, 'home');
         $router->getRoute();
-        $this->assertFileExists($this->config['cache_file'],
+        $this->assertFileExists(
+            $this->config['cache_file'],
             'Couldn\'t cache the file'
         );
     }
@@ -118,7 +118,8 @@ class MyRouterClass extends TestCase
         );
         $router->add(Router::GET, '/', 'app/main', Router::HTML, 'home');
         $router->getRoute();
-        $this->assertFileExists($this->config['cache_file'],
+        $this->assertFileExists(
+            $this->config['cache_file'],
             'Couldn\'t cache the file'
         );
     }

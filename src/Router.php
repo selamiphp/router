@@ -256,23 +256,19 @@ final class Router
         if ($this->cachedFile !== null && file_exists($this->cachedFile)) {
             return $this->cachedDispatcher();
         }
-        return $this->simpleDispatcher();
-    }
-
-    private function simpleDispatcher() : FastRoute\Dispatcher\GroupCountBased
-    {
         /**
          * @var \FastRoute\RouteCollector $routeCollector
          */
         $routeCollector = new FastRoute\RouteCollector(
-            new FastRoute\RouteParser\Std, new FastRoute\DataGenerator\GroupCountBased
+            new FastRoute\RouteParser\Std,
+            new FastRoute\DataGenerator\GroupCountBased
         );
         $this->addRoutes($routeCollector);
         $this->createCachedRoute($routeCollector);
         return new FastRoute\Dispatcher\GroupCountBased($routeCollector->getData());
     }
 
-    private function createCachedRoute($routeCollector ) : void
+    private function createCachedRoute($routeCollector) : void
     {
         if ($this->cachedFile !== null && !file_exists($this->cachedFile)) {
             /**
@@ -330,6 +326,7 @@ final class Router
      * Get router data that includes route info and aliases
      *
      * @return array
+     * @throws RuntimeException
      */
     public function getRoute() : array
     {
