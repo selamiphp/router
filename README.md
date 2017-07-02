@@ -23,7 +23,7 @@ declare(strict_types=1);
 
 $request = new PSR7ServerRequest(); // Let's say this class implements PSR7 ServerRequestInterface
 $response = new PSR7ServerResponse(); // Let's say this class implements PSR7 ResponseInterface
-$defaultReturnType  = 'json';       // Possible values: html, json, text, redirect, download. To be used to send output.
+$defaultReturnType  = Selami\Router::JSON; // Possible values: Selami\Router::HTML, Selami\Router::JSON, Selami\Router::TEXT, Selami\Router::CUSTOM, Selami\Router::REDIRECT, Selami\Router::DOWNLOAD. To be used to send output.
 $requestMethod      = 'GET';        // i.e. $_SERVER['REQUEST_METHOD']
 $requestedUri       = '/user/12/inbox'; // i.e. $_SERVER['REQUEST_URI']
 
@@ -42,7 +42,7 @@ Add routes that expect HTTP request methods. $route variable uses nikic/FastRout
 ```php
 $route = '/';
 $action = Controllers\Home::class;
-$returnType = 'html';
+$returnType = Selami\Router::HTML;
 $alias = 'home';
 
 $router->get(
@@ -68,7 +68,7 @@ $routeInfo = $router->getRoute();
 $routeInfo = [
     'route' => [
         'controller' => "Controllers\Api\Users\Inbox"
-        'returnType' => "html"
+        'returnType' => 1  // Selami\Router::HTML
         'args' => [
             'id' => 12,
             'box' => "inbox"
