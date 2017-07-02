@@ -87,11 +87,6 @@ final class Router
     private $cachedFile;
 
     /**
-     * @var array
-     */
-    private $routerClosures = [];
-
-    /**
      * Valid Request Methods array.
      * Make sures about requested methods.
      *
@@ -244,83 +239,6 @@ final class Router
         }
     }
 
-    /**
-     * Dispatch against the provided HTTP method verb and URI.
-     *
-     * @return FastRoute\Dispatcher
-     * @throws RuntimeException;
-     */
-    private function dispatcher() : FastRoute\Dispatcher
-    {
-        $this->setRouteClosures();
-        if ($this->cachedFile !== null && file_exists($this->cachedFile)) {
-            return $this->cachedDispatcher();
-        }
-        /**
-         * @var \FastRoute\RouteCollector $routeCollector
-         */
-        $routeCollector = new FastRoute\RouteCollector(
-            new FastRoute\RouteParser\Std,
-            new FastRoute\DataGenerator\GroupCountBased
-        );
-        $this->addRoutes($routeCollector);
-        $this->createCachedRoute($routeCollector);
-        return new FastRoute\Dispatcher\GroupCountBased($routeCollector->getData());
-    }
-
-    private function createCachedRoute($routeCollector) : void
-    {
-        if ($this->cachedFile !== null && !file_exists($this->cachedFile)) {
-            /**
-             * @var FastRoute\RouteCollector $routeCollector
-             */
-            $dispatchData = $routeCollector->getData();
-            file_put_contents($this->cachedFile, '<?php return ' . var_export($dispatchData, true) . ';');
-        }
-    }
-
-    /**
-     * @return FastRoute\Dispatcher\GroupCountBased
-     * @throws RuntimeException
-     */
-    private function cachedDispatcher() : FastRoute\Dispatcher\GroupCountBased
-    {
-        $dispatchData = include $this->cachedFile;
-        if (!is_array($dispatchData)) {
-            throw new RuntimeException('Invalid cache file "' . $this->cachedFile . '"');
-        }
-        return new FastRoute\Dispatcher\GroupCountBased($dispatchData);
-    }
-
-    /**
-     * Define Closures for all routes that returns controller info to be used.
-     *
-     * @param FastRoute\RouteCollector $route
-     */
-    private function addRoutes(FastRoute\RouteCollector $route) : void
-    {
-        $routeIndex=0;
-        foreach ($this->routes as $definedRoute) {
-            $definedRoute[3] = $definedRoute[3] ?? $this->defaultReturnType;
-            $routeName = 'routeClosure'.$routeIndex;
-            $route->addRoute(strtoupper($definedRoute[0]), $definedRoute[1], $routeName);
-            $routeIndex++;
-        }
-    }
-    private function setRouteClosures() : void
-    {
-        $routeIndex=0;
-        foreach ($this->routes as $definedRoute) {
-            $definedRoute[3] = $definedRoute[3] ?? $this->defaultReturnType;
-            $routeName = 'routeClosure'.$routeIndex;
-            [$requestMedhod, $url, $controller, $returnType] = $definedRoute;
-            $returnType = ($returnType >=1 && $returnType <=7) ? $returnType : $this->defaultReturnType;
-            $this->routerClosures[$routeName]= function ($args) use ($controller, $returnType) {
-                return  ['controller' => $controller, 'returnType'=> $returnType, 'args'=> $args];
-            };
-            $routeIndex++;
-        }
-    }
 
     /**
      * Get router data that includes route info and aliases
@@ -330,9 +248,10 @@ final class Router
      */
     public function getRoute() : array
     {
-        $dispatcher = $this->dispatcher();
+        $selamiDispatcher = new Dispatcher($this->routes, $this->defaultReturnType, $this->cachedFile);
+        $dispatcher = $selamiDispatcher->dispatcher();
         $routeInfo  = $dispatcher->dispatch($this->method, $this->requestedPath);
-        $route = $this->runDispatcher($routeInfo);
+        $route = $selamiDispatcher->runDispatcher($routeInfo);
         $routerData = [
             'route'     => $route,
             'aliases'   => $this->aliases
@@ -340,46 +259,4 @@ final class Router
         return $routerData;
     }
 
-    /**
-     * Get route info for requested uri
-     *
-     * @param  array $routeInfo
-     * @return array $routerData
-     */
-    private function runDispatcher(array $routeInfo) : array
-    {
-        $routeData = $this->getRouteData($routeInfo);
-        $dispatchResults = [
-            FastRoute\Dispatcher::METHOD_NOT_ALLOWED => [
-                'status' => 405
-            ],
-            FastRoute\Dispatcher::FOUND => [
-                'status'  => 200
-            ],
-            FastRoute\Dispatcher::NOT_FOUND => [
-                'status' => 404
-            ]
-        ];
-        return array_merge($routeData, $dispatchResults[$routeInfo[0]]);
-    }
-
-    /**
-     * Get routeData according to dispatcher's results
-     *
-     * @param  array $routeInfo
-     * @return array
-     */
-    private function getRouteData(array $routeInfo) : array
-    {
-        if ($routeInfo[0] === FastRoute\Dispatcher::FOUND) {
-            [$dispatcher, $handler, $vars] = $routeInfo;
-            return $this->routerClosures[$handler]($vars);
-        }
-        return [
-            'status'        => 200,
-            'returnType'    => Router::HTML,
-            'definedRoute'  => null,
-            'args'          => []
-        ];
-    }
 }
