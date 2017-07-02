@@ -23,7 +23,7 @@ class Dispatcher
     /**
      * Default return type if not noted in the $routes
      *
-     * @var string
+     * @var int
      */
     private $defaultReturnType;
 
