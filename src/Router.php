@@ -162,7 +162,7 @@ final class Router
     public function add(
         $requestMethods,
         string $route,
-        string $action,
+        $action,
         ?int $returnType = null,
         ?string $alias = null
     ) : void {
