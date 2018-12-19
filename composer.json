@@ -23,6 +23,8 @@
     "zendframework/zend-diactoros": "^1.8"
   },
   "autoload": {
-    "classmap": ["src/"]
+    "psr-4": {
+      "Selami\\Router\\": "src/"
+    }
   }
 }
