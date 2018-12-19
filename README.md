@@ -23,7 +23,7 @@ declare(strict_types=1);
 
 $request = new PSR7ServerRequest(); // Let's say this class implements PSR7 ServerRequestInterface
 $response = new PSR7ServerResponse(); // Let's say this class implements PSR7 ResponseInterface
-$defaultReturnType  = Selami\Router::JSON; // Possible values: Selami\Router::HTML, Selami\Router::JSON, Selami\Router::TEXT, Selami\Router::CUSTOM, Selami\Router::REDIRECT, Selami\Router::DOWNLOAD. To be used to send output.
+$defaultReturnType  = Selami\Router\Router::JSON; // Possible values: Selami\Router\Router::HTML, Selami\Router\Router::JSON, Selami\Router::TEXT, Selami\Router\Router::CUSTOM, Selami\Router\Router::REDIRECT, Selami\Router::DOWNLOAD. To be used to send output.
 $requestMethod      = 'GET';        // i.e. $_SERVER['REQUEST_METHOD']
 $requestedUri       = '/user/12/inbox'; // i.e. $_SERVER['REQUEST_URI']
 
