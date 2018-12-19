@@ -2,14 +2,14 @@
 
 namespace tests;
 
-use Selami\Router;
+use Selami\Router\Router;
 use Zend\Diactoros\ServerRequestFactory;
 use ReflectionObject;
 use UnexpectedValueException;
 use InvalidArgumentException;
 use PHPUnit\Framework\TestCase;
 
-class MyRouterClass extends TestCase
+class RouterTest extends TestCase
 {
     private $config = [
         'folder'                => '',
@@ -47,9 +47,6 @@ class MyRouterClass extends TestCase
     /**
      * @test
      * @dataProvider extractFolderDataProvider
-     * @param $requestedPath string
-     * @param $folder string
-     * @param $expected string
      */
     public function shouldExtractRouteFromURLSuccessfully($requestedPath, $folder, $expected) : void
     {
@@ -128,9 +125,6 @@ class MyRouterClass extends TestCase
     /**
      * @test
      * @dataProvider extractFolderDataProvider
-     * @param $requestedPath string
-     * @param $folder string
-     * @param $expected string
      */
     public function shouldReadCacheRoutesSuccessfully($requestedPath, $folder, $expected) : void
     {
@@ -142,9 +136,10 @@ class MyRouterClass extends TestCase
             $this->config['cache_file']
         );
         $router->add(Router::GET, '/', 'app/main', Router::HTML, 'home');
-        $router->getRoute();
+        $r = $router->getRoute();
 
         $router->add(Router::GET, '/', 'app/main', null, 'home');
+        $router->add(Router::GET, '/json', 'app/json', Router::JSON);
         $router->add(Router::GET, '/json', 'app/json', Router::JSON);
         $router->add(Router::POST, '/json', 'app/redirect', Router::REDIRECT);
         $router->add(Router::GET, '/alias', 'app/alias', null, 'alias');
@@ -191,7 +186,7 @@ class MyRouterClass extends TestCase
         $router = new Router(
             Router::JSON,
             $this->request->getMethod(),
-            $this->request->getUri()->getPath(),
+            '/alias/123',
             $this->config['folder']
         );
 
@@ -200,20 +195,26 @@ class MyRouterClass extends TestCase
         $router->get('/html', 'app/json');
         $router->post('/json', 'app/redirect', Router::REDIRECT);
         $router->get('/alias', 'app/alias', null, 'alias');
-        $routeInfo = $router->getRoute();
-        $this->assertArrayHasKey('aliases', $routeInfo, "Router didn't correctly return route data");
-
-        $this->assertArrayHasKey('home', $routeInfo['aliases'], "Router didn't correctly return aliases");
-        $this->assertArrayHasKey('alias', $routeInfo['aliases'], "Router didn't correctly return aliases");
-        $this->assertEquals('/', $routeInfo['aliases']['home'], "Router didn't correctly return aliases");
-        $this->assertEquals('/alias', $routeInfo['aliases']['alias'], "Router didn't correctly return aliases");
-        $this->assertArrayHasKey('controller', $routeInfo['route'], "Router didn't correctly return route data");
+        $router->get('/alias/{param:\d+}', 'app/alias', null, 'alias/param');
+        $route =  $router->getRoute();
+        $this->assertObjectHasAttribute('aliases', $route, "Router didn't correctly return route data");
+        $aliases = $route->getAliases();
+        $this->assertArrayHasKey('home', $aliases, "Router didn't correctly return aliases");
+        $this->assertArrayHasKey('alias', $aliases, "Router didn't correctly return aliases");
+        $this->assertEquals('/', $route->getAlias('home'), "Router didn't correctly return aliases");
+        $this->assertEquals('/alias', $route->getAlias('alias'), "Router didn't correctly return aliases");
+        $this->assertObjectHasAttribute('controller', $route, "Router didn't correctly return route data");
         $this->assertEquals(
             'app/alias',
-            $routeInfo['route']['controller'],
+            $route->getController(),
             "Router didn't correctly return router data"
         );
-        $this->assertEquals(Router::JSON, $routeInfo['route']['returnType'], "Router didn't correctly return router data");
+        $this->assertEquals(Router::JSON, $route->getReturnType(), "Router didn't correctly return router data");
+        $this->assertEquals('GET', $route->getRequestMethod(), "Router didn't correctly return router data");
+        $this->assertEquals('/alias/{param:\d+}', $route->getPattern(), "Router didn't correctly return router data");
+        $this->assertArrayHasKey('param', $route->getUriParameters(), "Router didn't correctly return aliases");
+        $this->assertEquals('123', $route->getUriParameters()['param'], "Router didn't correctly return aliases");
+        $this->assertEquals('/alias/123', $route->getRealUri(), "Router didn't correctly return aliases");
     }
 
     /**
@@ -262,9 +263,9 @@ class MyRouterClass extends TestCase
 
     /**
      * @test
-     * @expectedException InvalidArgumentException
+     * @expectedException \TypeError
      */
-    public function shouldThrowInvalidArgumentExceptionForAddMethodIfREquestMEthotIsNotStringOrArray() : void
+    public function shouldThrowInvalidArgumentExceptionForAddMethodIfRequestMethotIsNotStringOrArray() : void
     {
         $router = new Router(
             $this->config['default_return_type'],
@@ -293,7 +294,7 @@ class MyRouterClass extends TestCase
         $router->add(Router::POST, '/json', 'app/redirect', Router::REDIRECT);
         $router->add(Router::GET, '/alias', 'app/alias', null, 'alias');
         $routeInfo = $router->getRoute();
-        $this->assertEquals('405', $routeInfo['route']['status'], "Router didn't correctly return Method Not Allowed");
+        $this->assertEquals('405', $routeInfo->getStatusCode(), "Router didn't correctly return Method Not Allowed");
     }
 
     /**
@@ -315,7 +316,7 @@ class MyRouterClass extends TestCase
         $router->add(Router::POST, '/json', 'app/redirect', Router::REDIRECT);
         $router->add(Router::GET, '/alias', 'app/alias', null, 'alias');
         $routeInfo = $router->getRoute();
-        $this->assertEquals('404', $routeInfo['route']['status'], "Router didn't correctly returnNot FOund");
+        $this->assertEquals('404', $routeInfo->getStatusCode(), "Router didn't correctly returnNot FOund");
     }
 
     public static function tearDownAfterClass() : void

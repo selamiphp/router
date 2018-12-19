@@ -1,7 +1,7 @@
 <?php
 declare(strict_types=1);
 
-namespace Selami;
+namespace Selami\Router;
 
 use FastRoute;
 use RuntimeException;
@@ -37,6 +37,11 @@ class Dispatcher
      */
     private $routerClosures = [];
 
+    private static $dispatchResults = [
+        FastRoute\Dispatcher::METHOD_NOT_ALLOWED => 405,
+        FastRoute\Dispatcher::FOUND => 200 ,
+        FastRoute\Dispatcher::NOT_FOUND => 404
+    ];
 
     public function __construct(array $routes, int $defaultReturnType, ?string  $cachedFile)
     {
@@ -45,11 +50,8 @@ class Dispatcher
         $this->cachedFile = $cachedFile;
     }
 
-    /**
+    /*
      * Dispatch against the provided HTTP method verb and URI.
-     *
-     * @return FastRoute\Dispatcher
-     * @throws RuntimeException;
      */
     public function dispatcher() : FastRoute\Dispatcher
     {
@@ -80,10 +82,7 @@ class Dispatcher
         }
     }
 
-    /**
-     * @return FastRoute\Dispatcher\GroupCountBased
-     * @throws RuntimeException
-     */
+
     private function cachedDispatcher() : FastRoute\Dispatcher\GroupCountBased
     {
         $dispatchData = include $this->cachedFile;
@@ -93,10 +92,8 @@ class Dispatcher
         return new FastRoute\Dispatcher\GroupCountBased($dispatchData);
     }
 
-    /**
+    /*
      * Define Closures for all routes that returns controller info to be used.
-     *
-     * @param FastRoute\RouteCollector $route
      */
     private function addRoutes(FastRoute\RouteCollector $route) : void
     {
@@ -115,57 +112,42 @@ class Dispatcher
         foreach ($this->routes as $definedRoute) {
             $definedRoute[3] = $definedRoute[3] ?? $this->defaultReturnType;
             $routeName = 'routeClosure'.$routeIndex;
-            [$requestMedhod, $url, $controller, $returnType] = $definedRoute;
-            $returnType = ($returnType >=1 && $returnType <=7) ? $returnType : $this->defaultReturnType;
-            $this->routerClosures[$routeName]= function ($args) use ($controller, $returnType) {
-                return  ['controller' => $controller, 'returnType'=> $returnType, 'args'=> $args];
+            $this->routerClosures[$routeName]= function ($uriArguments) use ($definedRoute) {
+                $returnType = ($definedRoute[3] >=1 && $definedRoute[3] <=7) ? $definedRoute[3]
+                    : $this->defaultReturnType;
+                return  [
+                    'status' => 200,
+                    'requestMethod' => $definedRoute[0],
+                    'controller' => $definedRoute[2],
+                    'returnType' => $returnType,
+                    'pattern' => $definedRoute[1],
+                    'uriArguments'=> $uriArguments
+                ];
             };
             $routeIndex++;
         }
     }
 
-
-
-    /**
-     * Get route info for requested uri
-     *
-     * @param  array $routeInfo
-     * @return array $routerData
-     */
-    public function runDispatcher(array $routeInfo) : array
+    public function runDispatcher(array $routeInfo) : Route
     {
-        $routeData = $this->getRouteData($routeInfo);
-        $dispatchResults = [
-            FastRoute\Dispatcher::METHOD_NOT_ALLOWED => [
-                'status' => 405
-            ],
-            FastRoute\Dispatcher::FOUND => [
-                'status'  => 200
-            ],
-            FastRoute\Dispatcher::NOT_FOUND => [
-                'status' => 404
-            ]
-        ];
-        return array_merge($routeData, $dispatchResults[$routeInfo[0]]);
+        return  $this->getRouteData($routeInfo)
+            ->withStatusCode(self::$dispatchResults[$routeInfo[0]]);
     }
 
-    /**
-     * Get routeData according to dispatcher's results
-     *
-     * @param  array $routeInfo
-     * @return array
-     */
-    private function getRouteData(array $routeInfo) : array
+    private function getRouteData(array $routeInfo) : Route
     {
         if ($routeInfo[0] === FastRoute\Dispatcher::FOUND) {
             [$dispatcher, $handler, $vars] = $routeInfo;
-            return $this->routerClosures[$handler]($vars);
+            $routeParameters =  $this->routerClosures[$handler]($vars);
+            return new Route(
+                $routeParameters['requestMethod'],
+                $routeParameters['pattern'],
+                $routeParameters['status'],
+                $routeParameters['returnType'],
+                $routeParameters['controller'],
+                $routeParameters['uriArguments']
+            );
         }
-        return [
-            'status'        => 200,
-            'returnType'    => Router::HTML,
-            'definedRoute'  => null,
-            'args'          => []
-        ];
+        return new Route('GET', '/', 200, 1, 'main', []);
     }
 }
