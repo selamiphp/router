@@ -40,9 +40,11 @@ $router = new Selami\Router(
 Add routes that expect HTTP request methods. $route variable uses nikic/FastRoute's route syntax.
 
 ```php
+use Selami\Router\Router;
+
 $route = '/';
 $action = Controllers\Home::class;
-$returnType = Selami\Router::HTML;
+$returnType = Router::HTML;
 $alias = 'home';
 
 $router->get(
@@ -52,10 +54,10 @@ $router->get(
     $alias          // optional, default null
 );
 
-$router->post('/login', Controllers\Login::class, 'redirect');
-$router->get('/dashboard', Controllers\Dashboard::class, 'html', 'dashboard');
-$router->get('/api/user/{id}', Controllers\Api\Users::class, 'json');
-$router->get('/user/{id:\d+}/{box}', Controllers\Api\Users\Inbox::class, 'html', 'user_home');
+$router->post('/login', Controllers\Login::class, Router::REDIRECT);
+$router->get('/dashboard', Controllers\Dashboard::class, Router::HTML, 'dashboard');
+$router->get('/api/user/{id}', Controllers\Api\Users::class, Router::JSON);
+$router->get('/user/{id:\d+}/{box}', Controllers\Api\Users\Inbox::class, Router::HTML, 'user_home');
 
 ```
 Get requested route info and aliases.
