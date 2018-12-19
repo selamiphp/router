@@ -62,34 +62,15 @@ Get requested route info and aliases.
 
 ```php
 
-$routeInfo = $router->getRoute();
-
-/*
-$routeInfo = [
-    'route' => [
-        'controller' => "Controllers\Api\Users\Inbox"
-        'returnType' => 1  // Selami\Router::HTML
-        'args' => [
-            'id' => 12,
-            'box' => "inbox"
-         ]
-         'status' => 200
-    ]
-    'aliases' => [
-        'home' => "/"
-        'dashboard' => "/dashboard"
-    ]
-];
- 
-*/
+$routeInfo = $router->getRoute(); // Returns Selami\Router\Route object.
 
 ```
 Now you can call your controller.
 
 ```php
-$controller = new $routeInfo['route']['controller']($routeInfo['route']['args']);
+$controller = new {$routeInfo->getController()}($routeInfo->getUriParameters());
 
-$outputMethod = 'return' . ucfirst($routeInfo['route']['returnType']);
+$outputMethod = 'return' . ucfirst($routeInfo->getReturnType());
 
 echo $controller->$outputMethod($request, $response);
 
@@ -108,18 +89,18 @@ use BaseController;
 
 class Inbox extends BaseController {
     
-    private $args;
+    private $uriParameters;
     
-    public function __construct($args) 
+    public function __construct($uriParameters) 
     {
         parent::__construct();
-        $this->args = $args;
+        $this->uriParameters = $uriParameters;
     }
     
     public function returnHTML(ServerRequestInterface $request, ResponseInterface $response)
     {
         $response = $this->response->withHeader('Content-Type', 'text/html');
-        $response->getBody()->write('Your user id is: ' . $this->args['id'] . '. You are viewing your '. $this->args['box']);
+        $response->getBody()->write('Your user id is: ' . $this->args['id'] . '. You are viewing your '. $this->uriParameters['box']);
         return $response->output();
     }
 }
