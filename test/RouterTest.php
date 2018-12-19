@@ -2,11 +2,10 @@
 
 namespace tests;
 
+use Selami\Router\Exceptions\InvalidRequestMethodException;
 use Selami\Router\Router;
 use Zend\Diactoros\ServerRequestFactory;
 use ReflectionObject;
-use UnexpectedValueException;
-use InvalidArgumentException;
 use PHPUnit\Framework\TestCase;
 
 class RouterTest extends TestCase
@@ -219,7 +218,7 @@ class RouterTest extends TestCase
 
     /**
      * @test
-     * @expectedException UnexpectedValueException
+     * @expectedException \Selami\Router\Exceptions\InvalidRequestMethodException
      */
     public function shouldThrowUnexpectedValueExceptionForCallMethod() : void
     {
@@ -234,7 +233,7 @@ class RouterTest extends TestCase
 
     /**
      * @test
-     * @expectedException UnexpectedValueException
+     * @expectedException \Selami\Router\Exceptions\InvalidRequestMethodException
      */
     public function shouldThrowUnexpectedValueExceptionForConstructorMethod() : void
     {
@@ -248,7 +247,7 @@ class RouterTest extends TestCase
 
     /**
      * @test
-     * @expectedException UnexpectedValueException
+     * @expectedException \Selami\Router\Exceptions\InvalidRequestMethodException
      */
     public function shouldThrowUnexpectedValueExceptionForAddMethod() : void
     {

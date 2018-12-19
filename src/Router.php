@@ -14,9 +14,7 @@ declare(strict_types = 1);
 
 namespace Selami\Router;
 
-use InvalidArgumentException;
-use UnexpectedValueException;
-use RuntimeException;
+use Selami\Router\Exceptions\InvalidRequestMethodException;
 
 /**
  * Router
@@ -115,7 +113,7 @@ final class Router
     ) {
         if (!in_array($method, self::$validRequestMethods, true)) {
             $message = sprintf('%s is not valid Http request method.', $method);
-            throw new UnexpectedValueException($message);
+            throw new InvalidRequestMethodException($message);
         }
         $this->method = $method;
         $this->requestedPath = $this->extractFolder($requestedPath, $folder);
@@ -149,7 +147,6 @@ final class Router
         $requestMethodsGiven = is_array($requestMethods) ? $requestMethods : [$requestMethods];
         $returnType = $this->determineReturnType($returnType);
         foreach ($requestMethodsGiven as $requestMethod) {
-
             $this->checkRequestMethodIsValid($requestMethod);
             if ($alias !== null) {
                 $this->aliases[$alias] = $route;
@@ -171,7 +168,6 @@ final class Router
         $this->add($method, $route, $action, $returnType, $alias);
     }
 
-
     private function determineReturnType(?int $returnType) : int
     {
         if ($returnType === null) {
@@ -184,7 +180,7 @@ final class Router
     {
         if (!in_array(strtoupper($requestMethod), self::$validRequestMethods, true)) {
             $message = sprintf('%s is not valid Http request method.', $requestMethod);
-            throw new UnexpectedValueException($message);
+            throw new InvalidRequestMethodException($message);
         }
     }
 
