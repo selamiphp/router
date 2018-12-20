@@ -31,6 +31,7 @@ final class Router
     public const REDIRECT = 5;
     public const DOWNLOAD = 6;
     public const CUSTOM = 7;
+    public const EMPTY = 8;
 
     public const OPTIONS = 'OPTIONS';
     public const HEAD = 'HEAD';
