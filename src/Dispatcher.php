@@ -30,7 +30,7 @@ class Dispatcher
     /**
      * @var null|string
      */
-    private $cachedFile;
+    private $cacheFile;
 
     /**
      * @var array
@@ -43,11 +43,11 @@ class Dispatcher
         FastRoute\Dispatcher::NOT_FOUND => 404
     ];
 
-    public function __construct(array $routes, int $defaultReturnType, ?string  $cachedFile)
+    public function __construct(array $routes, int $defaultReturnType, ?string  $cacheFile)
     {
         $this->routes = $routes;
         $this->defaultReturnType = $defaultReturnType;
-        $this->cachedFile = $cachedFile;
+        $this->cacheFile = $cacheFile;
     }
 
     /*
@@ -56,7 +56,7 @@ class Dispatcher
     public function dispatcher() : FastRoute\Dispatcher
     {
         $this->setRouteClosures();
-        if ($this->cachedFile !== null && file_exists($this->cachedFile)) {
+        if ($this->cacheFile !== null && file_exists($this->cacheFile)) {
             return $this->cachedDispatcher();
         }
         /**
@@ -73,20 +73,20 @@ class Dispatcher
 
     private function createCachedRoute($routeCollector) : void
     {
-        if ($this->cachedFile !== null && !file_exists($this->cachedFile)) {
+        if ($this->cacheFile !== null && !file_exists($this->cacheFile)) {
             /**
              * @var FastRoute\RouteCollector $routeCollector
              */
             $dispatchData = $routeCollector->getData();
-            file_put_contents($this->cachedFile, '<?php return ' . var_export($dispatchData, true) . ';', LOCK_EX);
+            file_put_contents($this->cacheFile, '<?php return ' . var_export($dispatchData, true) . ';', LOCK_EX);
         }
     }
 
     private function cachedDispatcher() : FastRoute\Dispatcher\GroupCountBased
     {
-        $dispatchData = include $this->cachedFile;
+        $dispatchData = require $this->cacheFile;
         if (!is_array($dispatchData)) {
-            throw new InvalidCacheFileException('Invalid cache file "' . $this->cachedFile . '"');
+            throw new InvalidCacheFileException('Invalid cache file "' . $this->cacheFile . '"');
         }
         return new FastRoute\Dispatcher\GroupCountBased($dispatchData);
     }

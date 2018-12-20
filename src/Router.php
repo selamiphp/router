@@ -81,7 +81,7 @@ final class Router
     /**
      * @var null|string
      */
-    private $cachedFile;
+    private $cacheFile;
 
     /**
      * Valid Request Methods array.
@@ -135,7 +135,7 @@ final class Router
     public function withCacheFile(string $fileName) : self
     {
         $new = clone $this;
-        $new->cachedFile = $fileName;
+        $new->cacheFile = $fileName;
         return $new;
     }
 
@@ -203,7 +203,7 @@ final class Router
 
     public function getRoute() : Route
     {
-        $selamiDispatcher = new Dispatcher($this->routes, $this->defaultReturnType, $this->cachedFile);
+        $selamiDispatcher = new Dispatcher($this->routes, $this->defaultReturnType, $this->cacheFile);
         $routeInfo = $selamiDispatcher->dispatcher()
             ->dispatch($this->method, $this->requestedPath);
         return $selamiDispatcher->runDispatcher($routeInfo)
