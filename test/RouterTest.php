@@ -105,7 +105,7 @@ class RouterTest extends TestCase
             $this->request->getUri()->getPath()
         );
         $router = $router->withSubFolder($this->config['folder'])
-            ->withSubFolder($this->config['cache_file']);
+            ->withCacheFile($this->config['cache_file']);
         $router->getRoute();
     }
     /**
