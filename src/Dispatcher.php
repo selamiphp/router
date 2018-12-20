@@ -82,7 +82,6 @@ class Dispatcher
         }
     }
 
-
     private function cachedDispatcher() : FastRoute\Dispatcher\GroupCountBased
     {
         $dispatchData = include $this->cachedFile;

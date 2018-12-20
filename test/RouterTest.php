@@ -112,7 +112,8 @@ class RouterTest extends TestCase
             $this->request->getUri()->getPath()
         );
         $router = $router->withSubFolder($this->config['folder'])
-            ->withCacheFile('/tmp/failed.cache');
+            ->withCacheFile('/tmp/failed.cache')
+            ->withDefaultReturnType(Router::HTML);
         $router->add(Router::GET, '/', 'app/main', Router::HTML, 'home');
         $router->getRoute();
         $this->assertFileExists(

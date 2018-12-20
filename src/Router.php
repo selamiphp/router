@@ -118,12 +118,20 @@ final class Router
         $this->defaultReturnType = ($defaultReturnType >=1 && $defaultReturnType <=7) ? $defaultReturnType : self::HTML;
     }
 
+    public function withDefaultReturnType(int $defaultReturnType) : self
+    {
+        $new = clone $this;
+        $new->$defaultReturnType = $defaultReturnType;
+        return $new;
+    }
+
     public function withSubFolder(string $folder) : self
     {
         $new = clone $this;
         $new->requestedPath = $this->extractFolder($this->requestedPath, $folder);
         return $new;
     }
+
     public function withCacheFile(string $fileName) : self
     {
         $new = clone $this;
@@ -144,7 +152,6 @@ final class Router
         }
         return $requestPath;
     }
-
 
     public function add(
         $requestMethods,
