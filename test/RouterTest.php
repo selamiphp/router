@@ -22,7 +22,7 @@ class RouterTest extends TestCase
         $basedir = dirname(__DIR__) . '/app';
         $this->config['base_dir']   = $basedir;
         $this->config['app_dir']    = $basedir;
-        $this->config['cache_file']    = tempnam(sys_get_temp_dir(), 'FRT');
+        $this->config['cache_file']    = sys_get_temp_dir() .'/fsrt.cache';
         $_SERVER                    = [];
         $_FILES                     = [];
         $_GET                       = [];
@@ -52,9 +52,9 @@ class RouterTest extends TestCase
         $router = new Router(
             $this->config['default_return_type'],
             $this->request->getMethod(),
-            $this->request->getUri()->getPath(),
-            $this->config['folder']
+            $this->request->getUri()->getPath()
         );
+        $router= $router->withSubFolder($this->config['folder']);
         $router->add(Router::GET, '/', 'app/main', null, 'home');
         $router->add(Router::GET, '/json', 'app/json', Router::JSON);
         $router->add(Router::POST, '/json', 'app/redirect', Router::REDIRECT);
@@ -90,7 +90,7 @@ class RouterTest extends TestCase
             $this->request->getUri()->getPath()
         );
         $router = $router->withSubFolder($this->config['folder'])
-            ->withSubFolder($this->config['cache_file']);
+            ->withCacheFile($this->config['cache_file']);
 
         $router->add(Router::GET, '/', 'app/main', Router::HTML, 'home');
         $router->getRoute();
@@ -98,6 +98,15 @@ class RouterTest extends TestCase
             $this->config['cache_file'],
             'Couldn\'t cache the file'
         );
+        // Rest of the test should run without throwing exception
+        $router = new Router(
+            $this->config['default_return_type'],
+            $this->request->getMethod(),
+            $this->request->getUri()->getPath()
+        );
+        $router = $router->withSubFolder($this->config['folder'])
+            ->withSubFolder($this->config['cache_file']);
+        $router->getRoute();
     }
     /**
      * @test
@@ -132,13 +141,11 @@ class RouterTest extends TestCase
         $router = new Router(
             $this->config['default_return_type'],
             $this->request->getMethod(),
-            $this->request->getUri()->getPath(),
-            $this->config['folder'],
-            $this->config['cache_file']
+            $this->request->getUri()->getPath()
         );
+        $router = $router->withCacheFile($this->config['cache_file'])
+            ->withSubFolder($this->config['folder']);
         $router->add(Router::GET, '/', 'app/main', Router::HTML, 'home');
-        $r = $router->getRoute();
-
         $router->add(Router::GET, '/', 'app/main', null, 'home');
         $router->add(Router::GET, '/json', 'app/json', Router::JSON);
         $router->add(Router::GET, '/json', 'app/json', Router::JSON);
@@ -322,8 +329,8 @@ class RouterTest extends TestCase
 
     public static function tearDownAfterClass() : void
     {
-        if (file_exists('/tmp/fastroute.cache')) {
-            unlink('/tmp/fastroute.cache');
+        if (file_exists(sys_get_temp_dir() .'/fsrt.cache')) {
+            unlink(sys_get_temp_dir() .'/fsrt.cache');
         }
         if (file_exists('/tmp/failed.cache')) {
             unlink('/tmp/failed.cache');
