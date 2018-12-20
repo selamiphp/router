@@ -22,7 +22,7 @@ class RouterTest extends TestCase
         $basedir = dirname(__DIR__) . '/app';
         $this->config['base_dir']   = $basedir;
         $this->config['app_dir']    = $basedir;
-        $this->config['cache_file']    = '/tmp/fastroute.cache';
+        $this->config['cache_file']    = tempnam(sys_get_temp_dir(), 'FRT');
         $_SERVER                    = [];
         $_FILES                     = [];
         $_GET                       = [];
@@ -87,10 +87,11 @@ class RouterTest extends TestCase
         $router = new Router(
             $this->config['default_return_type'],
             $this->request->getMethod(),
-            $this->request->getUri()->getPath(),
-            $this->config['folder'],
-            $this->config['cache_file']
+            $this->request->getUri()->getPath()
         );
+        $router = $router->withSubFolder($this->config['folder'])
+            ->withSubFolder($this->config['cache_file']);
+
         $router->add(Router::GET, '/', 'app/main', Router::HTML, 'home');
         $router->getRoute();
         $this->assertFileExists(
@@ -100,7 +101,7 @@ class RouterTest extends TestCase
     }
     /**
      * @test
-     * @expectedException \RuntimeException
+     * @expectedException \Selami\Router\Exceptions\InvalidCacheFileException
      */
     public function shouldThrowExceptionForInvalidCachedFile() : void
     {
@@ -108,10 +109,10 @@ class RouterTest extends TestCase
         $router = new Router(
             $this->config['default_return_type'],
             $this->request->getMethod(),
-            $this->request->getUri()->getPath(),
-            $this->config['folder'],
-            '/tmp/failed.cache'
+            $this->request->getUri()->getPath()
         );
+        $router = $router->withSubFolder($this->config['folder'])
+            ->withCacheFile('/tmp/failed.cache');
         $router->add(Router::GET, '/', 'app/main', Router::HTML, 'home');
         $router->getRoute();
         $this->assertFileExists(
@@ -161,9 +162,9 @@ class RouterTest extends TestCase
         $router = new Router(
             $this->config['default_return_type'],
             $this->request->getMethod(),
-            $this->request->getUri()->getPath(),
-            $this->config['folder']
+            $this->request->getUri()->getPath()
         );
+        $router = $router->withSubFolder($this->config['folder']);
         $router->add(Router::GET, '/', 'app/main', null, 'home');
         $router->add(Router::GET, '/json', 'app/json', Router::JSON);
         $router->add(Router::POST, '/json', 'app/redirect', Router::REDIRECT);

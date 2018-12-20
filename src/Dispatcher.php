@@ -4,7 +4,7 @@ declare(strict_types=1);
 namespace Selami\Router;
 
 use FastRoute;
-use RuntimeException;
+use Selami\Router\Exceptions\InvalidCacheFileException;
 
 class Dispatcher
 {
@@ -78,7 +78,7 @@ class Dispatcher
              * @var FastRoute\RouteCollector $routeCollector
              */
             $dispatchData = $routeCollector->getData();
-            file_put_contents($this->cachedFile, '<?php return ' . var_export($dispatchData, true) . ';');
+            file_put_contents($this->cachedFile, '<?php return ' . var_export($dispatchData, true) . ';', LOCK_EX);
         }
     }
 
@@ -87,7 +87,7 @@ class Dispatcher
     {
         $dispatchData = include $this->cachedFile;
         if (!is_array($dispatchData)) {
-            throw new RuntimeException('Invalid cache file "' . $this->cachedFile . '"');
+            throw new InvalidCacheFileException('Invalid cache file "' . $this->cachedFile . '"');
         }
         return new FastRoute\Dispatcher\GroupCountBased($dispatchData);
     }

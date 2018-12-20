@@ -107,18 +107,28 @@ final class Router
     public function __construct(
         int $defaultReturnType,
         string $method,
-        string $requestedPath,
-        string $folder = '',
-        ?string $cachedFile = null
+        string $requestedPath
     ) {
         if (!in_array($method, self::$validRequestMethods, true)) {
             $message = sprintf('%s is not valid Http request method.', $method);
             throw new InvalidRequestMethodException($message);
         }
         $this->method = $method;
-        $this->requestedPath = $this->extractFolder($requestedPath, $folder);
+        $this->requestedPath = $requestedPath;
         $this->defaultReturnType = ($defaultReturnType >=1 && $defaultReturnType <=7) ? $defaultReturnType : self::HTML;
-        $this->cachedFile = $cachedFile;
+    }
+
+    public function withSubFolder(string $folder) : self
+    {
+        $new = clone $this;
+        $new->requestedPath = $this->extractFolder($this->requestedPath, $folder);
+        return $new;
+    }
+    public function withCacheFile(string $fileName) : self
+    {
+        $new = clone $this;
+        $new->cachedFile = $fileName;
+        return $new;
     }
 
     /*
