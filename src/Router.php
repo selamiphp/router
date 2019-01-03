@@ -15,7 +15,7 @@ declare(strict_types = 1);
 namespace Selami\Router;
 
 use Selami\Router\Exceptions\InvalidRequestMethodException;
-
+use Psr\Http\Message\ServerRequestInterface;
 /**
  * Router
  *
@@ -107,9 +107,10 @@ final class Router
      */
     public function __construct(
         int $defaultReturnType,
-        string $method,
-        string $requestedPath
+        ServerRequestInterface $request
     ) {
+        $method = $request->getMethod();
+        $requestedPath = $request->getUri()->getPath();
         if (!in_array($method, self::$validRequestMethods, true)) {
             $message = sprintf('%s is not valid Http request method.', $method);
             throw new InvalidRequestMethodException($message);
@@ -133,7 +134,7 @@ final class Router
         return $new;
     }
 
-    public function withCacheFile(string $fileName) : self
+    public function withCacheFile(?string $fileName=null) : self
     {
         $new = clone $this;
         $new->cacheFile = $fileName;

@@ -2,11 +2,12 @@
 
 namespace tests;
 
-use Selami\Router\Exceptions\InvalidRequestMethodException;
+use Psr\Http\Message\ServerRequestInterface;
 use Selami\Router\Router;
 use Zend\Diactoros\ServerRequestFactory;
 use ReflectionObject;
 use PHPUnit\Framework\TestCase;
+use Zend\Diactoros\Uri;
 
 class RouterTest extends TestCase
 {
@@ -40,6 +41,9 @@ class RouterTest extends TestCase
         $_SERVER['HTTPS']           = '';
         $_SERVER['REMOTE_ADDR']     = '127.0.0.1';
         $_SERVER['REQUEST_TIME']    = time();
+        /**
+         * @var ServerRequestInterface
+         */
         $this->request              = ServerRequestFactory::fromGlobals($_SERVER, $_GET, $_POST, $_COOKIE, $_FILES);
     }
 
@@ -51,8 +55,7 @@ class RouterTest extends TestCase
     {
         $router = new Router(
             $this->config['default_return_type'],
-            $this->request->getMethod(),
-            $this->request->getUri()->getPath()
+            $this->request
         );
         $router= $router->withSubFolder($this->config['folder']);
         $router->add(Router::GET, '/', 'app/main', null, 'home');
@@ -86,8 +89,7 @@ class RouterTest extends TestCase
     {
         $router = new Router(
             $this->config['default_return_type'],
-            $this->request->getMethod(),
-            $this->request->getUri()->getPath()
+            $this->request
         );
         $router = $router->withSubFolder($this->config['folder'])
             ->withCacheFile($this->config['cache_file']);
@@ -101,8 +103,7 @@ class RouterTest extends TestCase
         // Rest of the test should run without throwing exception
         $router = new Router(
             $this->config['default_return_type'],
-            $this->request->getMethod(),
-            $this->request->getUri()->getPath()
+            $this->request
         );
         $router = $router->withSubFolder($this->config['folder'])
             ->withCacheFile($this->config['cache_file']);
@@ -117,8 +118,7 @@ class RouterTest extends TestCase
         file_put_contents('/tmp/failed.cache', '');
         $router = new Router(
             $this->config['default_return_type'],
-            $this->request->getMethod(),
-            $this->request->getUri()->getPath()
+            $this->request
         );
         $router = $router->withSubFolder($this->config['folder'])
             ->withCacheFile('/tmp/failed.cache')
@@ -140,8 +140,7 @@ class RouterTest extends TestCase
     {
         $router = new Router(
             $this->config['default_return_type'],
-            $this->request->getMethod(),
-            $this->request->getUri()->getPath()
+            $this->request
         );
         $router = $router->withCacheFile($this->config['cache_file'])
             ->withSubFolder($this->config['folder']);
@@ -169,8 +168,7 @@ class RouterTest extends TestCase
     {
         $router = new Router(
             $this->config['default_return_type'],
-            $this->request->getMethod(),
-            $this->request->getUri()->getPath()
+            $this->request
         );
         $router = $router->withSubFolder($this->config['folder']);
         $router->add(Router::GET, '/', 'app/main', null, 'home');
@@ -193,9 +191,7 @@ class RouterTest extends TestCase
     {
         $router = new Router(
             Router::JSON,
-            $this->request->getMethod(),
-            '/alias/123',
-            $this->config['folder']
+            $this->request->withUri(new Uri('/alias/123'))
         );
 
         $router->get('/', 'app/main', null, 'home');
@@ -233,24 +229,22 @@ class RouterTest extends TestCase
     {
         $router = new Router(
             $this->config['default_return_type'],
-            $this->request->getMethod(),
-            $this->request->getUri()->getPath(),
-            $this->config['folder']
+            $this->request
+
         );
+        $router = $router->withSubFolder($this->config['folder']);
         $router->nonAvalibleHTTPMethod('/', 'app/main', null, 'home');
     }
 
     /**
      * @test
-     * @expectedException \Selami\Router\Exceptions\InvalidRequestMethodException
+     * @expectedException \TypeError
      */
     public function shouldThrowUnexpectedValueExceptionForConstructorMethod() : void
     {
         new Router(
             $this->config['default_return_type'],
-            'UNEXPECTEDVALUE',
-            $this->request->getUri()->getPath(),
-            $this->config['folder']
+            'UNEXPECTED'
         );
     }
 
@@ -262,10 +256,9 @@ class RouterTest extends TestCase
     {
         $router = new Router(
             $this->config['default_return_type'],
-            $this->request->getMethod(),
-            $this->request->getUri()->getPath(),
-            $this->config['folder']
+            $this->request
         );
+        $router = $router->withSubFolder($this->config['folder']);
         $router->add('nonAvailableHTTPMethod', '/', 'app/main', null, 'home');
     }
 
@@ -273,14 +266,13 @@ class RouterTest extends TestCase
      * @test
      * @expectedException \TypeError
      */
-    public function shouldThrowInvalidArgumentExceptionForAddMethodIfRequestMethotIsNotStringOrArray() : void
+    public function shouldThrowInvalidArgumentExceptionForAddMethodIfRequestMethodIsNotStringOrArray() : void
     {
         $router = new Router(
             $this->config['default_return_type'],
-            $this->request->getMethod(),
-            $this->request->getUri()->getPath(),
-            $this->config['folder']
+            $this->request
         );
+        $router = $router->withSubFolder($this->config['folder']);
         $router->add(200, '/', 'app/main', null, 'home');
     }
 
@@ -293,10 +285,9 @@ class RouterTest extends TestCase
         $this->request = ServerRequestFactory::fromGlobals($_SERVER, $_GET, $_POST, $_COOKIE, $_FILES);
         $router = new Router(
             $this->config['default_return_type'],
-            $this->request->getMethod(),
-            $this->request->getUri()->getPath(),
-            $this->config['folder']
+            $this->request
         );
+        $router = $router->withSubFolder($this->config['folder']);
         $router->add(Router::GET, '/', 'app/main', null, 'home');
         $router->add(Router::GET, '/json', 'app/json', Router::JSON);
         $router->add(Router::POST, '/json', 'app/redirect', Router::REDIRECT);
@@ -315,10 +306,9 @@ class RouterTest extends TestCase
         $this->request = ServerRequestFactory::fromGlobals($_SERVER, $_GET, $_POST, $_COOKIE, $_FILES);
         $router = new Router(
             $this->config['default_return_type'],
-            $this->request->getMethod(),
-            $this->request->getUri()->getPath(),
-            $this->config['folder']
+            $this->request
         );
+        $router = $router->withSubFolder($this->config['folder']);
         $router->add(Router::GET, '/', 'app/main', null, 'home');
         $router->add(Router::GET, '/json', 'app/json', Router::JSON);
         $router->add(Router::POST, '/json', 'app/redirect', Router::REDIRECT);
