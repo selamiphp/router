@@ -107,10 +107,9 @@ final class Router
      */
     public function __construct(
         int $defaultReturnType,
-        ServerRequestInterface $request
+        string $method,
+        string $requestedPath
     ) {
-        $method = $request->getMethod();
-        $requestedPath = $request->getUri()->getPath();
         if (!in_array($method, self::$validRequestMethods, true)) {
             $message = sprintf('%s is not valid Http request method.', $method);
             throw new InvalidRequestMethodException($message);
@@ -118,6 +117,11 @@ final class Router
         $this->method = $method;
         $this->requestedPath = $requestedPath;
         $this->defaultReturnType = ($defaultReturnType >=1 && $defaultReturnType <=7) ? $defaultReturnType : self::HTML;
+    }
+
+    public static function createWithServerRequestInterface(int $defaultReturnType, ServerRequestInterface $request)
+    {
+        return new self($defaultReturnType, $request->getMethod(), $request->getUri()->getPath());
     }
 
     public function withDefaultReturnType(int $defaultReturnType) : self

@@ -2,7 +2,7 @@
 
 namespace tests;
 
-use Psr\Http\Message\ServerRequestInterface;
+use Selami\Router\Exceptions\InvalidRequestMethodException;
 use Selami\Router\Router;
 use Zend\Diactoros\ServerRequestFactory;
 use ReflectionObject;
@@ -41,9 +41,6 @@ class RouterTest extends TestCase
         $_SERVER['HTTPS']           = '';
         $_SERVER['REMOTE_ADDR']     = '127.0.0.1';
         $_SERVER['REQUEST_TIME']    = time();
-        /**
-         * @var ServerRequestInterface
-         */
         $this->request              = ServerRequestFactory::fromGlobals($_SERVER, $_GET, $_POST, $_COOKIE, $_FILES);
     }
 
@@ -53,7 +50,7 @@ class RouterTest extends TestCase
      */
     public function shouldExtractRouteFromURLSuccessfully($requestedPath, $folder, $expected) : void
     {
-        $router = new Router(
+        $router = Router::createWithServerRequestInterface(
             $this->config['default_return_type'],
             $this->request
         );
@@ -87,7 +84,7 @@ class RouterTest extends TestCase
      */
     public function shouldCacheRoutesSuccessfully() : void
     {
-        $router = new Router(
+        $router = Router::createWithServerRequestInterface(
             $this->config['default_return_type'],
             $this->request
         );
@@ -101,7 +98,7 @@ class RouterTest extends TestCase
             'Couldn\'t cache the file'
         );
         // Rest of the test should run without throwing exception
-        $router = new Router(
+        $router = Router::createWithServerRequestInterface(
             $this->config['default_return_type'],
             $this->request
         );
@@ -116,7 +113,7 @@ class RouterTest extends TestCase
     public function shouldThrowExceptionForInvalidCachedFile() : void
     {
         file_put_contents('/tmp/failed.cache', '');
-        $router = new Router(
+        $router = Router::createWithServerRequestInterface(
             $this->config['default_return_type'],
             $this->request
         );
@@ -138,7 +135,7 @@ class RouterTest extends TestCase
      */
     public function shouldReadCacheRoutesSuccessfully($requestedPath, $folder, $expected) : void
     {
-        $router = new Router(
+        $router = Router::createWithServerRequestInterface(
             $this->config['default_return_type'],
             $this->request
         );
@@ -166,7 +163,7 @@ class RouterTest extends TestCase
      */
     public function shouldCorrectlyInstantiateRouter() : void
     {
-        $router = new Router(
+        $router = Router::createWithServerRequestInterface(
             $this->config['default_return_type'],
             $this->request
         );
@@ -189,7 +186,7 @@ class RouterTest extends TestCase
      */
     public function shouldCorrectlyReturnRouteAndRouteAliases() : void
     {
-        $router = new Router(
+        $router = Router::createWithServerRequestInterface(
             Router::JSON,
             $this->request->withUri(new Uri('/alias/123'))
         );
@@ -229,22 +226,23 @@ class RouterTest extends TestCase
     {
         $router = new Router(
             $this->config['default_return_type'],
-            $this->request
-
+            'NON-HTTP-REQUEST',
+            $this->config['folder']
         );
-        $router = $router->withSubFolder($this->config['folder']);
         $router->nonAvalibleHTTPMethod('/', 'app/main', null, 'home');
     }
 
     /**
      * @test
-     * @expectedException \TypeError
+     * @expectedException \Selami\Router\Exceptions\InvalidRequestMethodException
      */
     public function shouldThrowUnexpectedValueExceptionForConstructorMethod() : void
     {
         new Router(
             $this->config['default_return_type'],
-            'UNEXPECTED'
+            'UNEXPECTEDVALUE',
+            $this->request->getUri()->getPath(),
+            $this->config['folder']
         );
     }
 
@@ -256,9 +254,10 @@ class RouterTest extends TestCase
     {
         $router = new Router(
             $this->config['default_return_type'],
-            $this->request
+            $this->request->getMethod(),
+            $this->request->getUri()->getPath(),
+            $this->config['folder']
         );
-        $router = $router->withSubFolder($this->config['folder']);
         $router->add('nonAvailableHTTPMethod', '/', 'app/main', null, 'home');
     }
 
@@ -266,13 +265,14 @@ class RouterTest extends TestCase
      * @test
      * @expectedException \TypeError
      */
-    public function shouldThrowInvalidArgumentExceptionForAddMethodIfRequestMethodIsNotStringOrArray() : void
+    public function shouldThrowInvalidArgumentExceptionForAddMethodIfRequestMethotIsNotStringOrArray() : void
     {
         $router = new Router(
             $this->config['default_return_type'],
-            $this->request
+            $this->request->getMethod(),
+            $this->request->getUri()->getPath(),
+            $this->config['folder']
         );
-        $router = $router->withSubFolder($this->config['folder']);
         $router->add(200, '/', 'app/main', null, 'home');
     }
 
@@ -285,9 +285,10 @@ class RouterTest extends TestCase
         $this->request = ServerRequestFactory::fromGlobals($_SERVER, $_GET, $_POST, $_COOKIE, $_FILES);
         $router = new Router(
             $this->config['default_return_type'],
-            $this->request
+            $this->request->getMethod(),
+            $this->request->getUri()->getPath(),
+            $this->config['folder']
         );
-        $router = $router->withSubFolder($this->config['folder']);
         $router->add(Router::GET, '/', 'app/main', null, 'home');
         $router->add(Router::GET, '/json', 'app/json', Router::JSON);
         $router->add(Router::POST, '/json', 'app/redirect', Router::REDIRECT);
@@ -306,9 +307,10 @@ class RouterTest extends TestCase
         $this->request = ServerRequestFactory::fromGlobals($_SERVER, $_GET, $_POST, $_COOKIE, $_FILES);
         $router = new Router(
             $this->config['default_return_type'],
-            $this->request
+            $this->request->getMethod(),
+            $this->request->getUri()->getPath(),
+            $this->config['folder']
         );
-        $router = $router->withSubFolder($this->config['folder']);
         $router->add(Router::GET, '/', 'app/main', null, 'home');
         $router->add(Router::GET, '/json', 'app/json', Router::JSON);
         $router->add(Router::POST, '/json', 'app/redirect', Router::REDIRECT);
