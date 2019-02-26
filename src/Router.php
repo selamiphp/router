@@ -115,7 +115,7 @@ final class Router
             throw new InvalidRequestMethodException($message);
         }
         $this->method = $method;
-        $this->requestedPath = $requestedPath;
+        $this->requestedPath = rtrim($requestedPath, '/',);
         $this->defaultReturnType = ($defaultReturnType >=1 && $defaultReturnType <=7) ? $defaultReturnType : self::HTML;
     }
 
