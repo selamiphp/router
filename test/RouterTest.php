@@ -220,10 +220,10 @@ class RouterTest extends TestCase
 
     /**
      * @test
-     * @expectedException \Selami\Router\Exceptions\InvalidRequestMethodException
      */
     public function shouldThrowUnexpectedValueExceptionForCallMethod() : void
     {
+        $this->expectException(InvalidRequestMethodException::class);
         $router = new Router(
             $this->config['default_return_type'],
             'NON-HTTP-REQUEST',
@@ -234,10 +234,11 @@ class RouterTest extends TestCase
 
     /**
      * @test
-     * @expectedException \Selami\Router\Exceptions\InvalidRequestMethodException
      */
     public function shouldThrowUnexpectedValueExceptionForConstructorMethod() : void
     {
+        $this->expectException(InvalidRequestMethodException::class);
+
         new Router(
             $this->config['default_return_type'],
             'UNEXPECTEDVALUE',
@@ -248,10 +249,11 @@ class RouterTest extends TestCase
 
     /**
      * @test
-     * @expectedException \Selami\Router\Exceptions\InvalidRequestMethodException
      */
     public function shouldThrowUnexpectedValueExceptionForAddMethod() : void
     {
+        $this->expectException(InvalidRequestMethodException::class);
+
         $router = new Router(
             $this->config['default_return_type'],
             $this->request->getMethod(),
@@ -263,10 +265,11 @@ class RouterTest extends TestCase
 
     /**
      * @test
-     * @expectedException \TypeError
      */
     public function shouldThrowInvalidArgumentExceptionForAddMethodIfRequestMethotIsNotStringOrArray() : void
     {
+        $this->expectException(\TypeError::class);
+
         $router = new Router(
             $this->config['default_return_type'],
             $this->request->getMethod(),
