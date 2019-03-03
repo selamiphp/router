@@ -2,6 +2,7 @@
 
 namespace tests;
 
+use Selami\Router\Exceptions\InvalidCacheFileException;
 use Selami\Router\Exceptions\InvalidRequestMethodException;
 use Selami\Router\Router;
 use Zend\Diactoros\ServerRequestFactory;
@@ -108,10 +109,10 @@ class RouterTest extends TestCase
     }
     /**
      * @test
-     * @expectedException \Selami\Router\Exceptions\InvalidCacheFileException
      */
     public function shouldThrowExceptionForInvalidCachedFile() : void
     {
+        $this->expectException(InvalidCacheFileException::class);
         file_put_contents('/tmp/failed.cache', '');
         $router = Router::createWithServerRequestInterface(
             $this->config['default_return_type'],
@@ -173,12 +174,7 @@ class RouterTest extends TestCase
         $router->add(Router::POST, '/json', 'app/redirect', Router::REDIRECT);
         $router->add(Router::GET, '/alias', 'app/alias', null, 'alias');
         $this->assertInstanceOf(Router::class, $router);
-        $this->assertAttributeContains(
-            Router::GET,
-            'method',
-            $router,
-            "Router didn't correctly return method as GET."
-        );
+
     }
 
     /**
